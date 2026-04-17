@@ -26,6 +26,8 @@ type LeiloeiroFormErrors = {
   cpf?: string;
   email?: string;
   telefone?: string;
+  /** Erro geral (ex.: submit antes da verificação de disponibilidade). */
+  form?: string;
 };
 
 const DISP_DEBOUNCE_MS = 450;
@@ -87,6 +89,22 @@ function computeLeiloeiroDispIncludes(
 
 function digitsOnly(value: string): string {
   return value.replace(/\D/g, "");
+}
+
+/** Lê valores atuais do DOM (evita submit por Enter com estado React defasado). */
+function readLeiloeiroSnapshotFromForm(form: HTMLFormElement | null, draft: LeiloeiroRow): LeiloeiroRow {
+  if (!form) return draft;
+  const inputVal = (name: string) => form.querySelector<HTMLInputElement>(`input[name="${name}"]`)?.value;
+  const checked = form.querySelector<HTMLInputElement>('input[name="leiloeiro_ativo"][type="checkbox"]')?.checked;
+  return {
+    ...draft,
+    nome: inputVal("leiloeiro_nome") ?? draft.nome,
+    registro: inputVal("leiloeiro_registro") ?? draft.registro,
+    documento: inputVal("leiloeiro_documento") ?? draft.documento,
+    email: inputVal("leiloeiro_email") ?? draft.email,
+    telefone: inputVal("leiloeiro_telefone") ?? draft.telefone,
+    ativo: typeof checked === "boolean" ? checked : draft.ativo,
+  };
 }
 
 function maskCpf(value: string): string {
@@ -181,8 +199,10 @@ export function emptyLeiloeiroDraft(): LeiloeiroRow {
 }
 
 function EditBody({
+  formRef,
   draft,
   setDraft,
+  clearFieldError,
   onSubmit,
   onCancel,
   isSaving,
@@ -190,8 +210,10 @@ function EditBody({
   submitLabel = "Salvar alterações",
   avail,
 }: {
+  formRef: React.RefObject<HTMLFormElement | null>;
   draft: LeiloeiroRow;
   setDraft: React.Dispatch<React.SetStateAction<LeiloeiroRow | null>>;
+  clearFieldError: (key: keyof LeiloeiroFormErrors) => void;
   onSubmit: () => void;
   onCancel: () => void;
   isSaving: boolean;
@@ -209,18 +231,30 @@ function EditBody({
 }) {
   return (
     <form
+      ref={formRef}
       className="flex flex-col gap-4 px-2 pb-2"
       onSubmit={(e) => {
         e.preventDefault();
+        if (isSaving) return;
         onSubmit();
       }}
     >
+      {errors.form ? (
+        <p className="rounded-xl bg-red-50 px-3 py-2 text-xs font-medium text-red-700 ring-1 ring-red-100">
+          {errors.form}
+        </p>
+      ) : null}
       <div>
         <Label htmlFor="lei-nome">Nome</Label>
         <Input
           id="lei-nome"
+          name="leiloeiro_nome"
           value={draft.nome}
-          onChange={(e) => setDraft((d) => (d ? { ...d, nome: e.target.value } : d))}
+          onChange={(e) => {
+            clearFieldError("nome");
+            clearFieldError("form");
+            setDraft((d) => (d ? { ...d, nome: e.target.value } : d));
+          }}
           className="mt-1 rounded-2xl"
           autoComplete="name"
           disabled={isSaving}
@@ -231,10 +265,16 @@ function EditBody({
         <Label htmlFor="lei-reg">Registro profissional</Label>
         <Input
           id="lei-reg"
+          name="leiloeiro_registro"
           value={draft.registro}
-          onChange={(e) => setDraft((d) => (d ? { ...d, registro: e.target.value } : d))}
+          onChange={(e) => {
+            clearFieldError("registro");
+            clearFieldError("form");
+            setDraft((d) => (d ? { ...d, registro: e.target.value } : d));
+          }}
           className="mt-1 rounded-2xl"
           placeholder="Ex.: SP-00000-J"
+          autoComplete="off"
           disabled={isSaving}
           error={avail.errorRegistro}
         />
@@ -247,10 +287,13 @@ function EditBody({
         <Label htmlFor="lei-doc">CPF</Label>
         <Input
           id="lei-doc"
+          name="leiloeiro_documento"
           value={draft.documento}
-          onChange={(e) =>
-            setDraft((d) => (d ? { ...d, documento: maskCpf(e.target.value) } : d))
-          }
+          onChange={(e) => {
+            clearFieldError("cpf");
+            clearFieldError("form");
+            setDraft((d) => (d ? { ...d, documento: maskCpf(e.target.value) } : d));
+          }}
           className="mt-1 rounded-2xl"
           inputMode="numeric"
           placeholder="000.000.000-00"
@@ -266,11 +309,14 @@ function EditBody({
         <Label htmlFor="lei-email">E-mail</Label>
         <Input
           id="lei-email"
+          name="leiloeiro_email"
           type="email"
           value={draft.email}
-          onChange={(e) =>
-            setDraft((d) => (d ? { ...d, email: e.target.value } : d))
-          }
+          onChange={(e) => {
+            clearFieldError("email");
+            clearFieldError("form");
+            setDraft((d) => (d ? { ...d, email: e.target.value } : d));
+          }}
           onBlur={() =>
             setDraft((d) => (d ? { ...d, email: d.email.trim().toLowerCase() } : d))
           }
@@ -288,10 +334,13 @@ function EditBody({
         <Label htmlFor="lei-tel">Telefone</Label>
         <Input
           id="lei-tel"
+          name="leiloeiro_telefone"
           value={draft.telefone}
-          onChange={(e) =>
-            setDraft((d) => (d ? { ...d, telefone: maskTelefone(e.target.value) } : d))
-          }
+          onChange={(e) => {
+            clearFieldError("telefone");
+            clearFieldError("form");
+            setDraft((d) => (d ? { ...d, telefone: maskTelefone(e.target.value) } : d));
+          }}
           className="mt-1 rounded-2xl"
           autoComplete="tel"
           inputMode="numeric"
@@ -303,9 +352,13 @@ function EditBody({
       <div className="flex items-center gap-2.5 rounded-2xl bg-zinc-50 px-3 py-3 ring-1 ring-zinc-100">
         <input
           id="lei-ativo"
+          name="leiloeiro_ativo"
           type="checkbox"
           checked={draft.ativo}
-          onChange={(e) => setDraft((d) => (d ? { ...d, ativo: e.target.checked } : d))}
+          onChange={(e) => {
+            clearFieldError("form");
+            setDraft((d) => (d ? { ...d, ativo: e.target.checked } : d));
+          }}
           className="h-4 w-4 rounded border-zinc-300 text-[var(--nulance-purple)] focus:ring-[var(--ring)]"
           disabled={isSaving}
         />
@@ -319,9 +372,10 @@ function EditBody({
           id="lei-local"
           className="mt-1"
           value={draft.localPrincipal}
-          onValueChange={(v) =>
-            setDraft((d) => (d ? { ...d, localPrincipal: v } : d))
-          }
+          onValueChange={(v) => {
+            clearFieldError("form");
+            setDraft((d) => (d ? { ...d, localPrincipal: v } : d));
+          }}
           options={CIDADES_BRASIL_OPTIONS}
           placeholder="Selecione a cidade…"
           searchPlaceholder="Buscar cidade ou UF…"
@@ -375,8 +429,18 @@ export function LeiloeiroSheet({
   const [isSaving, setIsSaving] = React.useState(false);
   const [errors, setErrors] = React.useState<LeiloeiroFormErrors>({});
   const [disp, setDisp] = React.useState<LeiloeiroDispState>(() => emptyDisp());
+  const formRef = React.useRef<HTMLFormElement | null>(null);
   const rowRef = React.useRef(row);
   rowRef.current = row;
+
+  const clearFieldError = React.useCallback((key: keyof LeiloeiroFormErrors) => {
+    setErrors((prev) => {
+      if (!(key in prev)) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  }, []);
 
   React.useLayoutEffect(() => {
     if (!open) {
@@ -501,16 +565,33 @@ export function LeiloeiroSheet({
 
   const handleSave = React.useCallback(async () => {
     if (!draft || isSaving) return;
-    const nome = draft.nome.trim();
-    const email = draft.email.trim();
-    const cpf = draft.documento.trim();
-    const telefone = draft.telefone.trim();
+    const merged = readLeiloeiroSnapshotFromForm(formRef.current, draft);
+
+    const includesMerged =
+      mode !== "details"
+        ? computeLeiloeiroDispIncludes(
+            mode === "create" ? "create" : "edit",
+            merged,
+            mode === "edit" ? row : null
+          )
+        : { includeReg: false, includeCpf: false, includeEmail: false };
+    const disponibilidadeBloqueia =
+      disp.loading ||
+      (includesMerged.includeReg && disp.registro !== true) ||
+      (includesMerged.includeCpf && disp.cpf !== true) ||
+      (includesMerged.includeEmail && disp.email !== true);
+
+    const nome = merged.nome.trim();
+    const registro = merged.registro.trim();
+    const email = merged.email.trim();
+    const cpf = merged.documento.trim();
+    const telefone = merged.telefone.trim();
 
     const nextErrors: LeiloeiroFormErrors = {};
     if (!nome) nextErrors.nome = "Nome é obrigatório.";
     else if (looksLikeEmail(nome)) nextErrors.nome = "Nome não pode estar em formato de e-mail.";
 
-    if (!draft.registro.trim()) nextErrors.registro = "Registro profissional é obrigatório.";
+    if (!registro) nextErrors.registro = "Registro profissional é obrigatório.";
 
     if (!cpf) nextErrors.cpf = "CPF é obrigatório.";
     else if (!isValidCpf(cpf)) nextErrors.cpf = "CPF inválido.";
@@ -523,23 +604,40 @@ export function LeiloeiroSheet({
     }
 
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
+    if (Object.keys(nextErrors).length > 0) {
+      setDraft(merged);
+      return;
+    }
 
-    if (dispBloqueiaSubmit) return;
+    if (disponibilidadeBloqueia) {
+      setDraft(merged);
+      setErrors({
+        form: "Aguarde a verificação de disponibilidade ou corrija os campos destacados em vermelho.",
+      });
+      return;
+    }
 
-    const base = { ...draft, nome };
+    const base: LeiloeiroRow = {
+      ...merged,
+      nome,
+      registro,
+      documento: cpf,
+      email,
+      telefone,
+      localPrincipal: merged.localPrincipal.trim(),
+    };
     setIsSaving(true);
     try {
       if (mode === "create") {
         await onSave(base, "create");
       } else {
-        await onSave({ ...base, id: draft.id }, "update");
+        await onSave({ ...base, id: merged.id }, "update");
       }
       onClose();
     } finally {
       setIsSaving(false);
     }
-  }, [draft, dispBloqueiaSubmit, isSaving, mode, onClose, onSave]);
+  }, [draft, disp.loading, disp.registro, disp.cpf, disp.email, isSaving, mode, onClose, onSave, row]);
 
   const safeClose = React.useCallback(() => {
     if (isSaving) return;
@@ -571,8 +669,10 @@ export function LeiloeiroSheet({
           <DetailsBody row={row} />
         ) : draft && (mode === "edit" || mode === "create") ? (
           <EditBody
+            formRef={formRef}
             draft={draft}
             setDraft={setDraft}
+            clearFieldError={clearFieldError}
             onSubmit={() => void handleSave()}
             onCancel={safeClose}
             isSaving={isSaving}
