@@ -3,7 +3,7 @@
 import * as React from "react";
 
 import { API_ERROR_EMAIL_NAO_VERIFICADO } from "@/lib/auth-constants";
-import { getApiErrorCode, getApiErrorTrace } from "@/lib/api/error-body";
+import { getApiErrorCode } from "@/lib/api/error-body";
 import { clearAllAuthCookies, getAuthTokenFromDocument } from "@/lib/auth-cookies";
 import { applyAuthSessionFromLoginResponse, ensureFreshAccessToken } from "@/lib/auth-session";
 import * as authRepo from "@/lib/repositories/auth-repository";
@@ -186,48 +186,10 @@ export function useAuth(): AuthContextValue {
   return ctx;
 }
 
-/** Mensagem típica quando o backend ainda não trata EmailNaoVerificadoException (500 + JSON Spring). */
-function messageLooksLikeEmailNaoConfirmado(msgLower: string): boolean {
-  return (
-    /n[aã?]o foi confirm/.test(msgLower) ||
-    /ainda n[aã?]o foi confirm/.test(msgLower) ||
-    /c[oó?]digo v[aá?]lido pendente/.test(msgLower) ||
-    /e-?mail ainda n[aã?]o/.test(msgLower)
-  );
-}
-
+/** E-mail pendente de confirmação — usa apenas `code` do JSON (`GlobalExceptionHandler`). */
 export function isEmailNaoVerificadoError(err: unknown): boolean {
   if (err instanceof ConfirmarEmailPendenteError) return true;
   if (!(err instanceof ApiError)) return false;
-  const msg = (err.message || "").toLowerCase();
-  const status = err.status;
   const code = getApiErrorCode(err.body);
-  const trace = getApiErrorTrace(err.body) ?? "";
-  const bodyStr =
-    err.body !== undefined && err.body !== null
-      ? typeof err.body === "string"
-        ? err.body
-        : JSON.stringify(err.body)
-      : "";
-
-  if (code === API_ERROR_EMAIL_NAO_VERIFICADO || code === "EMAIL_PENDENTE_CONFIRMACAO") {
-    return true;
-  }
-
-  /** Backend sem @ExceptionHandler: Spring devolve 500 com trace contendo o nome da exceção. */
-  if (status === 500 && trace.includes("EmailNaoVerificadoException")) {
-    return true;
-  }
-
-  /** Produção costuma omitir `trace` no JSON; o nome da exceção às vezes ainda aparece no corpo serializado. */
-  if (status === 500 && bodyStr.includes("EmailNaoVerificado")) {
-    return true;
-  }
-
-  /** Mesmo 500: mensagem de negócio vem em `message` (evita abrir modal em 500 genérico). */
-  if (status === 500 && messageLooksLikeEmailNaoConfirmado(msg)) {
-    return true;
-  }
-
-  return false;
+  return code === API_ERROR_EMAIL_NAO_VERIFICADO;
 }

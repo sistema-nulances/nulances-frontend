@@ -24,6 +24,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
+import { getApiErrorCode } from "@/lib/api/error-body";
+import { API_ERROR_BAD_CREDENTIALS } from "@/lib/auth-constants";
 import { ApiError } from "@/lib/repositories/types/auth.types";
 
 function AuthLoginInner() {
@@ -79,12 +81,15 @@ function AuthLoginInner() {
             description: "Digite o código de 6 dígitos que enviamos para concluir o acesso.",
           });
         } else {
-          const msg =
-            err instanceof ApiError && (err.status === 401 || err.status === 403)
-              ? "E-mail ou senha incorretos."
-              : err instanceof Error
-                ? err.message
-                : "Não foi possível entrar.";
+          const apiErr = err instanceof ApiError ? err : null;
+          const errCode = apiErr ? getApiErrorCode(apiErr.body) : null;
+          const credenciaisIncorretas =
+            apiErr?.status === 401 || errCode === API_ERROR_BAD_CREDENTIALS;
+          const msg = credenciaisIncorretas
+            ? "E-mail ou senha incorretos."
+            : err instanceof Error
+              ? err.message
+              : "Não foi possível entrar.";
           toast({
             type: "error",
             title: "Falha no login",

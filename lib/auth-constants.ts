@@ -12,3 +12,6 @@ export const AUTH_HEADER_SCHEME = "Bearer";
 
 /** Código de erro no JSON do backend quando o login é recusado por e-mail não confirmado. */
 export const API_ERROR_EMAIL_NAO_VERIFICADO = "EMAIL_NAO_VERIFICADO";
+
+/** Login recusado por credenciais inválidas (`GlobalExceptionHandler` / Spring Security). */
+export const API_ERROR_BAD_CREDENTIALS = "BAD_CREDENTIALS";
