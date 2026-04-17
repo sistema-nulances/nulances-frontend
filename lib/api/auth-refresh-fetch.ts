@@ -1,5 +1,6 @@
 import { apiUrl } from "@/lib/api/api-url";
 import { getApiErrorMessage } from "@/lib/api/error-body";
+import { normalizeApiText } from "@/lib/api/repair-api-text";
 import type { LoginResponse } from "@/lib/repositories/types/auth.types";
 import { ApiError } from "@/lib/repositories/types/auth.types";
 
@@ -21,12 +22,12 @@ export async function fetchRefreshAccessToken(refreshToken: string): Promise<Log
 
   if (!res.ok) {
     const fromJson = body && typeof body === "object" ? getApiErrorMessage(body) : null;
-    const msg =
+    const rawMsg =
       fromJson ||
       (typeof body === "string" && body ? body : null) ||
       res.statusText ||
       `Erro HTTP ${res.status}`;
-    throw new ApiError(msg, res.status, body);
+    throw new ApiError(normalizeApiText(rawMsg), res.status, body);
   }
 
   return body as LoginResponse;

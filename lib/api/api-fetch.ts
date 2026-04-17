@@ -1,4 +1,5 @@
 import { getApiErrorMessage } from "@/lib/api/error-body";
+import { normalizeApiText } from "@/lib/api/repair-api-text";
 import { apiUrl } from "@/lib/api/api-url";
 import { buildAuthHeaders, shouldAttachAuthHeader } from "@/lib/api/auth-headers";
 import { getAuthTokenFromDocument } from "@/lib/auth-cookies";
@@ -78,11 +79,12 @@ export async function apiFetch<T = unknown>(path: string, options: ApiFetchOptio
     }
 
     const fromJson = body && typeof body === "object" ? getApiErrorMessage(body) : null;
-    const msg =
+    const rawMsg =
       fromJson ||
       (typeof body === "string" && body ? body : null) ||
       res.statusText ||
       `Erro HTTP ${res.status}`;
+    const msg = normalizeApiText(rawMsg);
     throw new ApiError(msg, res.status, body);
   }
 
