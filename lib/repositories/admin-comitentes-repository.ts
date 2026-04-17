@@ -1,7 +1,6 @@
 import { apiFetch } from "@/lib/api/api-fetch";
 import type {
   ComitenteCreateRequest,
-  ComitenteDisponibilidadeResponse,
   ComitenteListResponse,
   ComitenteResponse,
   ComitenteStatsResponse,
@@ -36,14 +35,4 @@ export async function editarComitenteAdmin(
 
 export async function excluirComitenteAdmin(id: string): Promise<void> {
   await apiFetch<unknown>(`/admin/comitentes/${encodeURIComponent(id)}`, { method: "DELETE" });
-}
-
-export async function verificarComitenteDisponibilidadeAdmin(
-  documento: string
-): Promise<ComitenteDisponibilidadeResponse> {
-  const d = documento.trim();
-  const sp = new URLSearchParams();
-  if (d) sp.set("documento", d);
-  const path = d ? `/admin/comitentes/disponibilidade?${sp.toString()}` : "/admin/comitentes/disponibilidade";
-  return apiFetch<ComitenteDisponibilidadeResponse>(path, { method: "GET" });
 }

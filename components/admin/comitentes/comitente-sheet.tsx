@@ -21,33 +21,13 @@ import {
   type ComitenteRow,
   type ComitenteTipo,
 } from "@/lib/admin-comitentes";
-import { verificarComitenteDisponibilidadeAdmin } from "@/lib/repositories/admin-comitentes-repository";
 
 const TIPOS: ComitenteTipo[] = ["Banco", "Seguradora", "Empresa", "Pessoa Física"];
 
-const DISP_DEBOUNCE_MS = 450;
-
-type ComitenteDispState = {
-  documento: boolean | null;
-  mensagem: string | null;
-  loading: boolean;
+type ComitenteFormErrors = {
+  nome?: string;
+  documento?: string;
 };
-
-function emptyComitenteDisp(): ComitenteDispState {
-  return { documento: null, mensagem: null, loading: false };
-}
-
-function computeComitenteDocInclude(
-  mode: "create" | "edit",
-  draft: ComitenteRow,
-  row: ComitenteRow | null
-): boolean {
-  const doc = draft.documento.trim();
-  if (!doc) return false;
-  if (mode === "create") return true;
-  if (!row) return false;
-  return doc !== row.documento.trim();
-}
 
 function tipoExibicao(tipo: ComitenteTipo) {
   return tipo === "Pessoa Física" ? "PF (Pessoa física)" : tipo;
@@ -121,29 +101,28 @@ export function emptyComitenteDraft(): ComitenteRow {
 function EditBody({
   draft,
   setDraft,
+  clearFieldError,
   onSubmit,
   onCancel,
   isSaving,
+  errors,
   submitLabel = "Salvar alterações",
-  avail,
 }: {
   draft: ComitenteRow;
   setDraft: React.Dispatch<React.SetStateAction<ComitenteRow | null>>;
+  clearFieldError: (key: keyof ComitenteFormErrors) => void;
   onSubmit: () => void;
   onCancel: () => void;
   isSaving: boolean;
+  errors: ComitenteFormErrors;
   submitLabel?: string;
-  avail: {
-    errorDocumento: boolean;
-    msgDocumento: string | null;
-    submitExtraDisabled: boolean;
-  };
 }) {
   return (
     <form
       className="flex flex-col gap-4 px-2 pb-2"
       onSubmit={(e) => {
         e.preventDefault();
+        if (isSaving) return;
         onSubmit();
       }}
     >
@@ -152,11 +131,15 @@ function EditBody({
         <Input
           id="cmt-nome"
           value={draft.nome}
-          onChange={(e) => setDraft((d) => (d ? { ...d, nome: e.target.value } : d))}
+          onChange={(e) => {
+            clearFieldError("nome");
+            setDraft((d) => (d ? { ...d, nome: e.target.value } : d));
+          }}
           className="mt-1 rounded-2xl"
           autoComplete="organization"
           disabled={isSaving}
         />
+        {errors.nome ? <p className="mt-1 text-xs text-red-600">{errors.nome}</p> : null}
       </div>
       <div>
         <Label htmlFor="cmt-tipo">Tipo</Label>
@@ -176,13 +159,15 @@ function EditBody({
         <Input
           id="cmt-doc"
           value={draft.documento}
-          onChange={(e) => setDraft((d) => (d ? { ...d, documento: e.target.value } : d))}
+          onChange={(e) => {
+            clearFieldError("documento");
+            setDraft((d) => (d ? { ...d, documento: e.target.value } : d));
+          }}
           className="mt-1 rounded-2xl"
           disabled={isSaving}
-          error={avail.errorDocumento}
         />
-        {avail.errorDocumento && avail.msgDocumento ? (
-          <p className="mt-1 text-xs font-medium text-red-600">{avail.msgDocumento}</p>
+        {errors.documento ? (
+          <p className="mt-1 text-xs text-red-600">{errors.documento}</p>
         ) : null}
       </div>
       <div className="flex items-center gap-2.5 rounded-2xl bg-zinc-50 px-3 py-3 ring-1 ring-zinc-100">
@@ -239,7 +224,7 @@ function EditBody({
           size="md"
           className="rounded-full"
           loading={isSaving}
-          disabled={isSaving || avail.submitExtraDisabled}
+          disabled={isSaving}
         >
           {submitLabel}
         </Button>
@@ -267,7 +252,7 @@ export function ComitenteSheet({
 }) {
   const [draft, setDraft] = React.useState<ComitenteRow | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
-  const [disp, setDisp] = React.useState<ComitenteDispState>(() => emptyComitenteDisp());
+  const [errors, setErrors] = React.useState<ComitenteFormErrors>({});
   const rowRef = React.useRef(row);
   rowRef.current = row;
 
@@ -275,7 +260,7 @@ export function ComitenteSheet({
     if (!open) {
       setDraft(null);
       setIsSaving(false);
-      setDisp(emptyComitenteDisp());
+      setErrors({});
       return;
     }
     if (mode === "create") {
@@ -291,70 +276,25 @@ export function ComitenteSheet({
     }
   }, [open, row?.id, mode]);
 
-  React.useEffect(() => {
-    if (!open || !draft || mode === "details") return;
-
-    const formMode = mode === "create" ? "create" : "edit";
-    const baselineRow = mode === "edit" ? row : null;
-    const includeDoc = computeComitenteDocInclude(formMode, draft, baselineRow);
-    const docTrim = draft.documento.trim();
-
-    const h = window.setTimeout(() => {
-      void (async () => {
-        if (!includeDoc) {
-          setDisp(emptyComitenteDisp());
-          return;
-        }
-
-        setDisp((d) => ({ ...d, loading: true }));
-        try {
-          const res = await verificarComitenteDisponibilidadeAdmin(docTrim);
-          setDisp({
-            loading: false,
-            documento: res.disponivel,
-            mensagem: res.mensagem ?? null,
-          });
-        } catch {
-          setDisp({
-            loading: false,
-            documento: false,
-            mensagem: "Não foi possível verificar o documento.",
-          });
-        }
-      })();
-    }, DISP_DEBOUNCE_MS);
-
-    return () => window.clearTimeout(h);
-  }, [open, mode, draft?.documento, row?.id, row?.documento]);
-
-  const includeDocForSubmit =
-    draft && mode !== "details"
-      ? computeComitenteDocInclude(mode === "create" ? "create" : "edit", draft, mode === "edit" ? row : null)
-      : false;
-
-  const documentoVazio = !draft?.documento.trim();
-  const dispBloqueiaSubmit =
-    disp.loading || (includeDocForSubmit && disp.documento !== true) || documentoVazio;
-
-  const availUi =
-    draft && mode !== "details"
-      ? {
-          errorDocumento: includeDocForSubmit && disp.documento === false,
-          msgDocumento: disp.mensagem,
-          submitExtraDisabled: dispBloqueiaSubmit,
-        }
-      : {
-          errorDocumento: false,
-          msgDocumento: null,
-          submitExtraDisabled: false,
-        };
+  const clearFieldError = React.useCallback((key: keyof ComitenteFormErrors) => {
+    setErrors((prev) => {
+      if (!(key in prev)) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  }, []);
 
   const handleSave = React.useCallback(async () => {
     if (!draft || isSaving) return;
     const nome = draft.nome.trim();
-    if (!nome) return;
-    if (!draft.documento.trim()) return;
-    if (dispBloqueiaSubmit) return;
+    const doc = draft.documento.trim();
+    const nextErrors: ComitenteFormErrors = {};
+    if (!nome) nextErrors.nome = "Nome é obrigatório.";
+    if (!doc) nextErrors.documento = "Documento é obrigatório.";
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+
     const base = { ...draft, nome };
     setIsSaving(true);
     try {
@@ -367,7 +307,7 @@ export function ComitenteSheet({
     } finally {
       setIsSaving(false);
     }
-  }, [draft, dispBloqueiaSubmit, isSaving, mode, onClose, onSave]);
+  }, [draft, isSaving, mode, onClose, onSave]);
 
   const safeClose = React.useCallback(() => {
     if (isSaving) return;
@@ -401,11 +341,12 @@ export function ComitenteSheet({
           <EditBody
             draft={draft}
             setDraft={setDraft}
+            clearFieldError={clearFieldError}
             onSubmit={() => void handleSave()}
             onCancel={safeClose}
             isSaving={isSaving}
+            errors={errors}
             submitLabel={mode === "create" ? "Cadastrar comitente" : "Salvar alterações"}
-            avail={availUi}
           />
         ) : null}
       </SheetContent>
