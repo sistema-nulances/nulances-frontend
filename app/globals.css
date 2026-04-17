@@ -3,24 +3,55 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  --nulance-purple: #63146c;
+  --nulance-yellow: #f1af00;
+
+  --border: #e5e7eb;
+  --muted: #f5f5f5;
+  --muted-foreground: #6b7280;
+  --ring: rgba(99, 20, 108, 0.18);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  --color-nulance-purple: var(--nulance-purple);
+  --color-nulance-yellow: var(--nulance-yellow);
+
+  --font-sans: var(--font-vend-sans);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Mantemos o layout claro também em dark-mode do SO,
+       para evitar tela “preta” e manter consistência visual. */
+    --background: #ffff;
+    --foreground: #171717;
   }
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e4e4e7;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #d4d4d8;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-vend-sans), Helvetica, sans-serif;
 }
