@@ -2,7 +2,6 @@ import { apiFetch } from "@/lib/api/api-fetch";
 import type {
   CriarLeiloeiroRequest,
   EditarLeiloeiroRequest,
-  LeiloeiroDisponibilidadeResponse,
   LeiloeiroListResponse,
   LeiloeiroResponse,
   LeiloeiroStatsResponse,
@@ -36,21 +35,4 @@ export async function editarLeiloeiroAdmin(
 
 export async function excluirLeiloeiroAdmin(id: string): Promise<void> {
   await apiFetch<unknown>(`/admin/leiloeiros/${encodeURIComponent(id)}`, { method: "DELETE" });
-}
-
-export async function verificarLeiloeiroDisponibilidadeAdmin(params: {
-  registroProfissional?: string;
-  cpfSomenteDigitos?: string;
-  email?: string;
-}): Promise<LeiloeiroDisponibilidadeResponse> {
-  const sp = new URLSearchParams();
-  const reg = params.registroProfissional?.trim();
-  if (reg) sp.set("registroProfissional", reg);
-  const cpf = params.cpfSomenteDigitos?.replace(/\D/g, "") ?? "";
-  if (cpf.length === 11) sp.set("cpf", cpf);
-  const em = params.email?.trim().toLowerCase();
-  if (em) sp.set("email", em);
-  const q = sp.toString();
-  const path = q ? `/admin/leiloeiros/disponibilidade?${q}` : "/admin/leiloeiros/disponibilidade";
-  return apiFetch<LeiloeiroDisponibilidadeResponse>(path, { method: "GET" });
 }

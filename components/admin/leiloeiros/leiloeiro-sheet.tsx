@@ -11,14 +11,12 @@ import {
   SheetContent,
   SheetDescription,
   SheetHeader,
-  SheetSeparator,
   SheetTitle,
 } from "@/components/ui/sheet";
 import {
   type LeiloeiroRow,
 } from "@/lib/admin-leiloeiros";
 import { formatCpfOuCnpjExibicao } from "@/lib/formatters";
-import { verificarLeiloeiroDisponibilidadeAdmin } from "@/lib/repositories/admin-leiloeiros-repository";
 
 type LeiloeiroFormErrors = {
   nome?: string;
@@ -26,66 +24,7 @@ type LeiloeiroFormErrors = {
   cpf?: string;
   email?: string;
   telefone?: string;
-  /** Erro geral (ex.: submit antes da verificação de disponibilidade). */
-  form?: string;
 };
-
-const DISP_DEBOUNCE_MS = 450;
-
-type LeiloeiroDispState = {
-  registro: boolean | null;
-  cpf: boolean | null;
-  email: boolean | null;
-  mensagemRegistro: string | null;
-  mensagemCpf: string | null;
-  mensagemEmail: string | null;
-  loading: boolean;
-};
-
-function emptyDisp(): LeiloeiroDispState {
-  return {
-    registro: null,
-    cpf: null,
-    email: null,
-    mensagemRegistro: null,
-    mensagemCpf: null,
-    mensagemEmail: null,
-    loading: false,
-  };
-}
-
-function computeLeiloeiroDispIncludes(
-  mode: "create" | "edit",
-  draft: LeiloeiroRow,
-  row: LeiloeiroRow | null
-): { includeReg: boolean; includeCpf: boolean; includeEmail: boolean } {
-  const regTrim = draft.registro.trim();
-  const cpfDig = digitsOnly(draft.documento);
-  const emailTrim = draft.email.trim();
-  const emailOk = isValidEmail(emailTrim);
-  const cpfOk = cpfDig.length === 11 && isValidCpf(draft.documento);
-
-  if (mode === "create") {
-    return {
-      includeReg: regTrim.length > 0,
-      includeCpf: cpfOk,
-      includeEmail: emailOk,
-    };
-  }
-  if (!row) {
-    return { includeReg: false, includeCpf: false, includeEmail: false };
-  }
-  const baseline = {
-    registro: row.registro.trim(),
-    cpfDigits: digitsOnly(row.documento),
-    email: row.email.trim().toLowerCase(),
-  };
-  return {
-    includeReg: regTrim.length > 0 && regTrim !== baseline.registro,
-    includeCpf: cpfOk && cpfDig !== baseline.cpfDigits,
-    includeEmail: emailOk && emailTrim.toLowerCase() !== baseline.email,
-  };
-}
 
 function digitsOnly(value: string): string {
   return value.replace(/\D/g, "");
@@ -208,7 +147,6 @@ function EditBody({
   isSaving,
   errors,
   submitLabel = "Salvar alterações",
-  avail,
 }: {
   formRef: React.RefObject<HTMLFormElement | null>;
   draft: LeiloeiroRow;
@@ -219,15 +157,6 @@ function EditBody({
   isSaving: boolean;
   errors: LeiloeiroFormErrors;
   submitLabel?: string;
-  avail: {
-    errorRegistro: boolean;
-    errorCpf: boolean;
-    errorEmail: boolean;
-    msgRegistro: string | null;
-    msgCpf: string | null;
-    msgEmail: string | null;
-    submitExtraDisabled: boolean;
-  };
 }) {
   return (
     <form
@@ -239,11 +168,6 @@ function EditBody({
         onSubmit();
       }}
     >
-      {errors.form ? (
-        <p className="rounded-xl bg-red-50 px-3 py-2 text-xs font-medium text-red-700 ring-1 ring-red-100">
-          {errors.form}
-        </p>
-      ) : null}
       <div>
         <Label htmlFor="lei-nome">Nome</Label>
         <Input
@@ -252,7 +176,6 @@ function EditBody({
           value={draft.nome}
           onChange={(e) => {
             clearFieldError("nome");
-            clearFieldError("form");
             setDraft((d) => (d ? { ...d, nome: e.target.value } : d));
           }}
           className="mt-1 rounded-2xl"
@@ -269,19 +192,14 @@ function EditBody({
           value={draft.registro}
           onChange={(e) => {
             clearFieldError("registro");
-            clearFieldError("form");
             setDraft((d) => (d ? { ...d, registro: e.target.value } : d));
           }}
           className="mt-1 rounded-2xl"
           placeholder="Ex.: SP-00000-J"
           autoComplete="off"
           disabled={isSaving}
-          error={avail.errorRegistro}
         />
         {errors.registro ? <p className="mt-1 text-xs text-red-600">{errors.registro}</p> : null}
-        {avail.errorRegistro && avail.msgRegistro ? (
-          <p className="mt-1 text-xs font-medium text-red-600">{avail.msgRegistro}</p>
-        ) : null}
       </div>
       <div>
         <Label htmlFor="lei-doc">CPF</Label>
@@ -291,19 +209,14 @@ function EditBody({
           value={draft.documento}
           onChange={(e) => {
             clearFieldError("cpf");
-            clearFieldError("form");
             setDraft((d) => (d ? { ...d, documento: maskCpf(e.target.value) } : d));
           }}
           className="mt-1 rounded-2xl"
           inputMode="numeric"
           placeholder="000.000.000-00"
           disabled={isSaving}
-          error={avail.errorCpf}
         />
         {errors.cpf ? <p className="mt-1 text-xs text-red-600">{errors.cpf}</p> : null}
-        {avail.errorCpf && avail.msgCpf ? (
-          <p className="mt-1 text-xs font-medium text-red-600">{avail.msgCpf}</p>
-        ) : null}
       </div>
       <div>
         <Label htmlFor="lei-email">E-mail</Label>
@@ -314,7 +227,6 @@ function EditBody({
           value={draft.email}
           onChange={(e) => {
             clearFieldError("email");
-            clearFieldError("form");
             setDraft((d) => (d ? { ...d, email: e.target.value } : d));
           }}
           onBlur={() =>
@@ -323,12 +235,8 @@ function EditBody({
           className="mt-1 rounded-2xl"
           autoComplete="email"
           disabled={isSaving}
-          error={avail.errorEmail}
         />
         {errors.email ? <p className="mt-1 text-xs text-red-600">{errors.email}</p> : null}
-        {avail.errorEmail && avail.msgEmail ? (
-          <p className="mt-1 text-xs font-medium text-red-600">{avail.msgEmail}</p>
-        ) : null}
       </div>
       <div>
         <Label htmlFor="lei-tel">Telefone</Label>
@@ -338,7 +246,6 @@ function EditBody({
           value={draft.telefone}
           onChange={(e) => {
             clearFieldError("telefone");
-            clearFieldError("form");
             setDraft((d) => (d ? { ...d, telefone: maskTelefone(e.target.value) } : d));
           }}
           className="mt-1 rounded-2xl"
@@ -355,10 +262,7 @@ function EditBody({
           name="leiloeiro_ativo"
           type="checkbox"
           checked={draft.ativo}
-          onChange={(e) => {
-            clearFieldError("form");
-            setDraft((d) => (d ? { ...d, ativo: e.target.checked } : d));
-          }}
+          onChange={(e) => setDraft((d) => (d ? { ...d, ativo: e.target.checked } : d))}
           className="h-4 w-4 rounded border-zinc-300 text-[var(--nulance-purple)] focus:ring-[var(--ring)]"
           disabled={isSaving}
         />
@@ -372,10 +276,7 @@ function EditBody({
           id="lei-local"
           className="mt-1"
           value={draft.localPrincipal}
-          onValueChange={(v) => {
-            clearFieldError("form");
-            setDraft((d) => (d ? { ...d, localPrincipal: v } : d));
-          }}
+          onValueChange={(v) => setDraft((d) => (d ? { ...d, localPrincipal: v } : d))}
           options={CIDADES_BRASIL_OPTIONS}
           placeholder="Selecione a cidade…"
           searchPlaceholder="Buscar cidade ou UF…"
@@ -399,7 +300,7 @@ function EditBody({
           size="md"
           className="rounded-full"
           loading={isSaving}
-          disabled={isSaving || avail.submitExtraDisabled}
+          disabled={isSaving}
         >
           {submitLabel}
         </Button>
@@ -428,7 +329,6 @@ export function LeiloeiroSheet({
   const [draft, setDraft] = React.useState<LeiloeiroRow | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
   const [errors, setErrors] = React.useState<LeiloeiroFormErrors>({});
-  const [disp, setDisp] = React.useState<LeiloeiroDispState>(() => emptyDisp());
   const formRef = React.useRef<HTMLFormElement | null>(null);
   const rowRef = React.useRef(row);
   rowRef.current = row;
@@ -447,7 +347,6 @@ export function LeiloeiroSheet({
       setDraft(null);
       setIsSaving(false);
       setErrors({});
-      setDisp(emptyDisp());
       return;
     }
     if (mode === "create") {
@@ -467,119 +366,9 @@ export function LeiloeiroSheet({
     }
   }, [open, row?.id, mode]);
 
-  React.useEffect(() => {
-    if (!open || !draft || mode === "details") return;
-
-    const formMode = mode === "create" ? "create" : "edit";
-    const baselineRow = mode === "edit" ? row : null;
-    const { includeReg, includeCpf, includeEmail } = computeLeiloeiroDispIncludes(
-      formMode,
-      draft,
-      baselineRow
-    );
-    const regTrim = draft.registro.trim();
-    const cpfDig = digitsOnly(draft.documento);
-    const emailTrim = draft.email.trim();
-
-    const h = window.setTimeout(() => {
-      void (async () => {
-        if (!includeReg && !includeCpf && !includeEmail) {
-          setDisp(emptyDisp());
-          return;
-        }
-
-        setDisp((d) => ({ ...d, loading: true }));
-        try {
-          const res = await verificarLeiloeiroDisponibilidadeAdmin({
-            registroProfissional: includeReg ? regTrim : undefined,
-            cpfSomenteDigitos: includeCpf ? cpfDig : undefined,
-            email: includeEmail ? emailTrim : undefined,
-          });
-          setDisp({
-            loading: false,
-            registro: includeReg ? res.registroDisponivel : null,
-            cpf: includeCpf ? res.cpfDisponivel : null,
-            email: includeEmail ? res.emailDisponivel : null,
-            mensagemRegistro: includeReg ? res.mensagemRegistro ?? null : null,
-            mensagemCpf: includeCpf ? res.mensagemCpf ?? null : null,
-            mensagemEmail: includeEmail ? res.mensagemEmail ?? null : null,
-          });
-        } catch {
-          setDisp({
-            loading: false,
-            registro: includeReg ? false : null,
-            cpf: includeCpf ? false : null,
-            email: includeEmail ? false : null,
-            mensagemRegistro: includeReg ? "Não foi possível verificar o registro." : null,
-            mensagemCpf: includeCpf ? "Não foi possível verificar o CPF." : null,
-            mensagemEmail: includeEmail ? "Não foi possível verificar o e-mail." : null,
-          });
-        }
-      })();
-    }, DISP_DEBOUNCE_MS);
-
-    return () => window.clearTimeout(h);
-  }, [
-    open,
-    mode,
-    draft?.registro,
-    draft?.documento,
-    draft?.email,
-    row?.id,
-    row?.registro,
-    row?.documento,
-    row?.email,
-  ]);
-
-  const includesForSubmit =
-    draft && mode !== "details"
-      ? computeLeiloeiroDispIncludes(mode === "create" ? "create" : "edit", draft, mode === "edit" ? row : null)
-      : { includeReg: false, includeCpf: false, includeEmail: false };
-
-  const dispBloqueiaSubmit =
-    disp.loading ||
-    (includesForSubmit.includeReg && disp.registro !== true) ||
-    (includesForSubmit.includeCpf && disp.cpf !== true) ||
-    (includesForSubmit.includeEmail && disp.email !== true);
-
-  const availUi =
-    draft && mode !== "details"
-      ? {
-          errorRegistro: includesForSubmit.includeReg && disp.registro === false,
-          errorCpf: includesForSubmit.includeCpf && disp.cpf === false,
-          errorEmail: includesForSubmit.includeEmail && disp.email === false,
-          msgRegistro: disp.mensagemRegistro,
-          msgCpf: disp.mensagemCpf,
-          msgEmail: disp.mensagemEmail,
-          submitExtraDisabled: dispBloqueiaSubmit,
-        }
-      : {
-          errorRegistro: false,
-          errorCpf: false,
-          errorEmail: false,
-          msgRegistro: null,
-          msgCpf: null,
-          msgEmail: null,
-          submitExtraDisabled: false,
-        };
-
   const handleSave = React.useCallback(async () => {
     if (!draft || isSaving) return;
     const merged = readLeiloeiroSnapshotFromForm(formRef.current, draft);
-
-    const includesMerged =
-      mode !== "details"
-        ? computeLeiloeiroDispIncludes(
-            mode === "create" ? "create" : "edit",
-            merged,
-            mode === "edit" ? row : null
-          )
-        : { includeReg: false, includeCpf: false, includeEmail: false };
-    const disponibilidadeBloqueia =
-      disp.loading ||
-      (includesMerged.includeReg && disp.registro !== true) ||
-      (includesMerged.includeCpf && disp.cpf !== true) ||
-      (includesMerged.includeEmail && disp.email !== true);
 
     const nome = merged.nome.trim();
     const registro = merged.registro.trim();
@@ -609,14 +398,6 @@ export function LeiloeiroSheet({
       return;
     }
 
-    if (disponibilidadeBloqueia) {
-      setDraft(merged);
-      setErrors({
-        form: "Aguarde a verificação de disponibilidade ou corrija os campos destacados em vermelho.",
-      });
-      return;
-    }
-
     const base: LeiloeiroRow = {
       ...merged,
       nome,
@@ -637,7 +418,7 @@ export function LeiloeiroSheet({
     } finally {
       setIsSaving(false);
     }
-  }, [draft, disp.loading, disp.registro, disp.cpf, disp.email, isSaving, mode, onClose, onSave, row]);
+  }, [draft, isSaving, mode, onClose, onSave, row]);
 
   const safeClose = React.useCallback(() => {
     if (isSaving) return;
@@ -678,7 +459,6 @@ export function LeiloeiroSheet({
             isSaving={isSaving}
             errors={errors}
             submitLabel={mode === "create" ? "Cadastrar leiloeiro" : "Salvar alterações"}
-            avail={availUi}
           />
         ) : null}
       </SheetContent>
