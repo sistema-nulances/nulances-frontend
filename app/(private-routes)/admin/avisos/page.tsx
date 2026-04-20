@@ -1,5 +1,5 @@
-import { AdminAvisosPageContent } from "./admin-avisos-page-content";
+import { AdminUsersManagementPageContent } from "@/components/admin/users/admin-users-management-page-content";
 
-export default function AdminAvisosPage() {
-  return <AdminAvisosPageContent />;
+export default function AdminUsersPage() {
+  return <AdminUsersManagementPageContent scope="leilao" />;
 }

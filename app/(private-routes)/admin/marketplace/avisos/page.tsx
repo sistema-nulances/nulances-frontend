@@ -1,5 +1,5 @@
-import { AdminAvisosPageContent } from "@/app/(private-routes)/admin/avisos/admin-avisos-page-content";
+import { AdminUsersManagementPageContent } from "@/components/admin/users/admin-users-management-page-content";
 
-export default function AdminMarketplaceAvisosPage() {
-  return <AdminAvisosPageContent scope="marketplace" />;
+export default function AdminMarketplaceUsersPage() {
+  return <AdminUsersManagementPageContent scope="marketplace" />;
 }
