@@ -20,7 +20,6 @@ import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { LicensePlate } from "@/components/ui/license-plate";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/cn";
 import { getApiOrigin } from "@/lib/api/api-url";
@@ -337,6 +336,18 @@ export default function AuctionDetailPage() {
                 </span>
               </div>
 
+              {usuarioEstaGanhando && (
+                <div className="mb-6 rounded-2xl border border-emerald-300 bg-gradient-to-r from-emerald-50 to-lime-50 p-4 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex h-2.5 w-2.5 rounded-full animate-pulse bg-emerald-500" />
+                    <p className="text-sm font-semibold text-emerald-800">Voce esta ganhando este lote</p>
+                  </div>
+                  <p className="mt-1 text-sm text-emerald-700">
+                    Seu lance e o maior no momento. Continue acompanhando em tempo real.
+                  </p>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
                 <div className="space-y-8 lg:col-span-2">
                   <div className="overflow-hidden rounded-3xl bg-white p-3 ring-1 ring-zinc-200">
@@ -422,16 +433,7 @@ export default function AuctionDetailPage() {
                       <DetailItem icon={AuctionIcon} label="Combustível" value={formatEnumDisplayLabel(item.combustivel)} />
                       <DetailItem icon={AuctionIcon} label="Condição" value={formatEnumDisplayLabel(item.condicao)} />
                       <DetailItem icon={AuctionIcon} label="Cor" value={normalizeColor(item.cor)} />
-                      <DetailItem icon={AuctionIcon} label="Chassi final" value={item.finalChassi || "-"} />
                       <DetailItem icon={Clock01Icon} label="Encerramento" value={formatDate(item.encerramentoDisputa)} />
-                    </div>
-
-                    <div className="mt-8 flex flex-col gap-4 border-t border-zinc-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <h4 className="text-sm font-semibold uppercase tracking-wider text-zinc-500">Placa do veículo</h4>
-                        <p className="mt-1 text-sm text-zinc-500">Informações oficiais do item.</p>
-                      </div>
-                      <LicensePlate plate={item.placaVeiculo || "SEM-PLACA"} />
                     </div>
 
                     <div className="mt-8 border-t border-zinc-100 pt-6">
@@ -536,18 +538,6 @@ export default function AuctionDetailPage() {
                         </p>
                       </div>
 
-                      {usuarioEstaGanhando && (
-                        <div className="rounded-2xl border border-emerald-300 bg-gradient-to-r from-emerald-50 to-lime-50 p-3 shadow-sm">
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                            <p className="text-sm font-semibold text-emerald-800">Voce esta ganhando este lote</p>
-                          </div>
-                          <p className="mt-1 text-xs text-emerald-700">
-                            Seu lance e o maior no momento. Continue acompanhando em tempo real.
-                          </p>
-                        </div>
-                      )}
-
                       <div className="space-y-2 border-t border-zinc-100 pt-1">
                         <InfoRow icon={Calendar03Icon} label={`Abertura: ${formatDate(item.aberturaDisputa)}`} />
                         <InfoRow icon={Clock01Icon} label={`Encerramento: ${formatDate(item.encerramentoDisputa)}`} />
@@ -591,6 +581,16 @@ export default function AuctionDetailPage() {
                             <span className="text-[11px] text-zinc-500">Mín: {formatMoney(item.incrementoMinimo)}</span>
                           </div>
 
+                          <Button
+                            type="button"
+                            size="lg"
+                            disabled={selectedIncrement === null || submittingBid}
+                            className="h-12 w-full rounded-xl bg-nulance-purple font-bold hover:bg-nulance-purple/90 disabled:opacity-50"
+                            onClick={handleConfirmBid}
+                          >
+                            {submittingBid ? "Enviando..." : "Confirmar Lance"}
+                          </Button>
+
                           <div className="grid grid-cols-2 gap-2.5">
                             {increments.map((inc) => (
                               <Button
@@ -609,16 +609,6 @@ export default function AuctionDetailPage() {
                               </Button>
                             ))}
                           </div>
-
-                          <Button
-                            type="button"
-                            size="lg"
-                            disabled={selectedIncrement === null || submittingBid}
-                            className="h-12 w-full rounded-xl bg-nulance-purple font-bold hover:bg-nulance-purple/90 disabled:opacity-50"
-                            onClick={handleConfirmBid}
-                          >
-                            {submittingBid ? "Enviando..." : "Confirmar Lance"}
-                          </Button>
                         </>
                       )}
                     </div>
