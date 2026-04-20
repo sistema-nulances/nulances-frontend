@@ -164,7 +164,7 @@ export function LoteEditSheet({
                 {lote.codigo?.trim() ? lote.codigo : "Será gerado ao salvar"}
               </p>
               <p className="mt-1.5 text-xs text-zinc-500">
-                {isCreate ? "Definido pelo backend ao criar o lote." : "Gerado pelo sistema. Não editável."}
+                {isCreate ? "Gerado automaticamente ao criar o lote." : "Gerado pelo sistema. Não editável."}
               </p>
             </div>
             <div>

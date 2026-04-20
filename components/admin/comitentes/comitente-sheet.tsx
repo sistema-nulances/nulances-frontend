@@ -107,6 +107,7 @@ function EditBody({
   isSaving,
   errors,
   submitLabel = "Salvar alterações",
+  showLotesSection = true,
 }: {
   draft: ComitenteRow;
   setDraft: React.Dispatch<React.SetStateAction<ComitenteRow | null>>;
@@ -116,6 +117,7 @@ function EditBody({
   isSaving: boolean;
   errors: ComitenteFormErrors;
   submitLabel?: string;
+  showLotesSection?: boolean;
 }) {
   return (
     <form
@@ -199,15 +201,19 @@ function EditBody({
           disabled={isSaving}
         />
       </div>
-      <SheetSeparator />
-      <LotesSection row={draft}>
-        <DetailField label="Total de lotes">{draft.totalLotes}</DetailField>
-        <div className="grid grid-cols-3 gap-2">
-          <DetailField label="Abertos">{draft.lotesAbertos}</DetailField>
-          <DetailField label="Em breve">{draft.lotesEmBreve}</DetailField>
-          <DetailField label="Encerrados">{draft.lotesEncerrados}</DetailField>
-        </div>
-      </LotesSection>
+      {showLotesSection ? (
+        <>
+          <SheetSeparator />
+          <LotesSection row={draft}>
+            <DetailField label="Total de lotes">{draft.totalLotes}</DetailField>
+            <div className="grid grid-cols-3 gap-2">
+              <DetailField label="Abertos">{draft.lotesAbertos}</DetailField>
+              <DetailField label="Em breve">{draft.lotesEmBreve}</DetailField>
+              <DetailField label="Encerrados">{draft.lotesEncerrados}</DetailField>
+            </div>
+          </LotesSection>
+        </>
+      ) : null}
       <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:justify-end">
         <Button
           type="button"
@@ -347,6 +353,7 @@ export function ComitenteSheet({
             isSaving={isSaving}
             errors={errors}
             submitLabel={mode === "create" ? "Cadastrar comitente" : "Salvar alterações"}
+            showLotesSection={mode !== "create"}
           />
         ) : null}
       </SheetContent>

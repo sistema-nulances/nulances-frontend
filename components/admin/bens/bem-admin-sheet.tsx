@@ -865,7 +865,7 @@ export function BemAdminSheet({
             aria-describedby="bem-chassi-hint"
           />
           <p id="bem-chassi-hint" className="mt-1 text-xs text-zinc-500">
-            Letras e números (até 10 caracteres), alinhado ao final do chassi na API.
+            Use letras e números (até 10 caracteres).
           </p>
         </div>
         <div>

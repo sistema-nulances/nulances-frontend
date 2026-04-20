@@ -271,8 +271,7 @@ export function AdminBannersPageContent({ variant = "home" }: AdminBannersPageCo
           (proporção <strong className="font-semibold text-zinc-800">{HOME_BANNER_IDEAL.aspectRatioLabel}</strong>
           ). Referência visual:{" "}
           <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-800">public/BANNER-MOCK1.png</code>
-          . Na página pública a imagem é exibida com <span className="font-medium text-zinc-800">object-cover</span>
-          ; desvios grandes do recorte podem cortar texto ou logo.
+          . Assim o banner fica bem enquadrado e evita cortes em textos ou logos.
         </p>
       </div>
 
