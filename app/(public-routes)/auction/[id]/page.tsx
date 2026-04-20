@@ -66,6 +66,13 @@ function normalizeColor(value?: string | null): string {
   return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 }
 
+function normalizeName(value?: string | null): string {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
 export default function AuctionDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -141,6 +148,12 @@ export default function AuctionDetailPage() {
   const currentBidValue = item?.lanceAtual ?? item?.valorInicial ?? 0;
   const aberturaMs = item?.aberturaDisputa ? new Date(item.aberturaDisputa).getTime() : NaN;
   const encerramentoMs = item?.encerramentoDisputa ? new Date(item.encerramentoDisputa).getTime() : NaN;
+  const ultimoLance = item?.historicoLances?.[0];
+  const usuarioEstaGanhando = useMemo(() => {
+    if (!isAuthenticated || !user || status !== "ABERTO") return false;
+    if (!ultimoLance?.usuarioNome) return false;
+    return normalizeName(ultimoLance.usuarioNome) === normalizeName(user.nomeCompleto);
+  }, [isAuthenticated, status, ultimoLance?.usuarioNome, user]);
 
   /** Alinhado ao cronômetro e às mesmas datas que o back valida em `processarLance`. */
   const podeDarLance = useMemo(() => {
@@ -522,6 +535,18 @@ export default function AuctionDetailPage() {
                           {formatMoney(item.lanceAtual ?? item.valorInicial)}
                         </p>
                       </div>
+
+                      {usuarioEstaGanhando && (
+                        <div className="rounded-2xl border border-emerald-300 bg-gradient-to-r from-emerald-50 to-lime-50 p-3 shadow-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <p className="text-sm font-semibold text-emerald-800">Voce esta ganhando este lote</p>
+                          </div>
+                          <p className="mt-1 text-xs text-emerald-700">
+                            Seu lance e o maior no momento. Continue acompanhando em tempo real.
+                          </p>
+                        </div>
+                      )}
 
                       <div className="space-y-2 border-t border-zinc-100 pt-1">
                         <InfoRow icon={Calendar03Icon} label={`Abertura: ${formatDate(item.aberturaDisputa)}`} />
