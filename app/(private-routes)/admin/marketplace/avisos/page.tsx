@@ -1,5 +1,5 @@
-import { AdminUsersManagementPageContent } from "@/components/admin/users/admin-users-management-page-content";
+import { redirect } from "next/navigation";
 
-export default function AdminMarketplaceUsersPage() {
-  return <AdminUsersManagementPageContent scope="marketplace" />;
+export default function AdminMarketplaceAvisosRedirectPage() {
+  redirect("/admin/marketplace/usuarios");
 }

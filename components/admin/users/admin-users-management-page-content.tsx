@@ -7,21 +7,36 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/ui/page-header";
+import { Pagination } from "@/components/ui/pagination";
 import { Select, type SelectOption } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  alterarCargoUsuarioAdmin,
+  buscarUsuarioAdminPorId,
+  editarUsuarioAdminParcial,
+  listarUsuariosAdmin,
+} from "@/lib/repositories/admin-usuarios-repository";
+import type {
+  AdminUsuarioResponse,
+  AdminUsuarioRoleApi,
+} from "@/lib/repositories/types/admin-usuarios.types";
+import { ApiError } from "@/lib/repositories/types/auth.types";
 
 type UsersScreenScope = "leilao" | "marketplace";
-type UserRole = "Administrador" | "Comitente" | "Leiloeiro" | "Vendedor" | "Comprador";
 
-type ManagedUser = {
+type UiUser = {
   id: string;
   nome: string;
   email: string;
-  role: UserRole;
-  ativo: boolean;
+  role: AdminUsuarioRoleApi;
   cidade: string;
-  criadoEm: string;
+  telefone: string;
 };
+
+type UiStatusFilter = "todos" | "ativos" | "inativos";
+
+const PAGE_SIZE = 10;
 
 const STATUS_FILTER_OPTIONS: SelectOption[] = [
   { value: "todos", label: "Todos os status" },
@@ -31,75 +46,278 @@ const STATUS_FILTER_OPTIONS: SelectOption[] = [
 
 const ROLE_FILTER_OPTIONS: SelectOption[] = [
   { value: "todos", label: "Todos os perfis" },
-  { value: "Administrador", label: "Administrador" },
-  { value: "Comitente", label: "Comitente" },
-  { value: "Leiloeiro", label: "Leiloeiro" },
-  { value: "Vendedor", label: "Vendedor" },
-  { value: "Comprador", label: "Comprador" },
+  { value: "ADMIN", label: "Administrador" },
+  { value: "LEILOEIRO", label: "Leiloeiro" },
+  { value: "COMITENTE", label: "Comitente" },
+  { value: "VENDEDOR", label: "Vendedor" },
+  { value: "COMPRADOR", label: "Comprador" },
 ];
 
-const ROLE_EDIT_OPTIONS: SelectOption[] = ROLE_FILTER_OPTIONS.filter((option) => option.value !== "todos");
+function parseApiError(error: unknown): string {
+  if (error instanceof ApiError) return error.message;
+  if (error instanceof Error) return error.message;
+  return "Não foi possível concluir a operação.";
+}
 
-const MOCK_USERS: ManagedUser[] = [
-  { id: "u-001", nome: "Pietro Menezes", email: "pietro@nulances.com", role: "Administrador", ativo: true, cidade: "São Paulo - SP", criadoEm: "03/02/2026" },
-  { id: "u-002", nome: "Allianz Seguros", email: "allianz@seguradora.com", role: "Comitente", ativo: true, cidade: "Curitiba - PR", criadoEm: "11/02/2026" },
-  { id: "u-003", nome: "João Leilões", email: "joao@leiloes.com", role: "Leiloeiro", ativo: true, cidade: "Goiânia - GO", criadoEm: "19/02/2026" },
-  { id: "u-004", nome: "Maria Vendedora", email: "maria@vendas.com", role: "Vendedor", ativo: false, cidade: "Belo Horizonte - MG", criadoEm: "25/02/2026" },
-  { id: "u-005", nome: "Carlos Comprador", email: "carlos@email.com", role: "Comprador", ativo: true, cidade: "Brasília - DF", criadoEm: "03/03/2026" },
-  { id: "u-006", nome: "Banco Sul", email: "contato@bancosul.com", role: "Comitente", ativo: true, cidade: "Porto Alegre - RS", criadoEm: "08/03/2026" },
-  { id: "u-007", nome: "Fernanda Admin", email: "fernanda@nulances.com", role: "Administrador", ativo: true, cidade: "São Paulo - SP", criadoEm: "12/03/2026" },
-  { id: "u-008", nome: "Rafael Motors", email: "rafael@motors.com", role: "Vendedor", ativo: true, cidade: "Campinas - SP", criadoEm: "16/03/2026" },
-];
+function roleLabel(role: string): string {
+  const code = String(role).toUpperCase();
+  if (code === "ADMIN") return "Administrador";
+  if (code === "LEILOEIRO") return "Leiloeiro";
+  if (code === "COMITENTE") return "Comitente";
+  if (code === "VENDEDOR") return "Vendedor";
+  if (code === "COMPRADOR") return "Comprador";
+  return role;
+}
 
-function roleBadgeVariant(role: UserRole): "purple" | "emerald" | "amber" | "zinc" {
-  if (role === "Administrador") return "purple";
-  if (role === "Comitente" || role === "Leiloeiro") return "amber";
-  if (role === "Vendedor") return "emerald";
+function roleBadgeVariant(role: string): "purple" | "emerald" | "amber" | "zinc" {
+  const code = String(role).toUpperCase();
+  if (code === "ADMIN") return "purple";
+  if (code === "VENDEDOR") return "emerald";
+  if (code === "LEILOEIRO" || code === "COMITENTE") return "amber";
   return "zinc";
 }
 
-export function AdminUsersManagementPageContent({ scope = "leilao" }: { scope?: UsersScreenScope }) {
-  const [users, setUsers] = React.useState<ManagedUser[]>(MOCK_USERS);
-  const [search, setSearch] = React.useState("");
-  const [statusFilter, setStatusFilter] = React.useState("todos");
-  const [roleFilter, setRoleFilter] = React.useState("todos");
+function toUiUser(row: {
+  id: string;
+  nomeCompleto: string;
+  email: string;
+  role: AdminUsuarioRoleApi;
+  cidade?: string | null;
+  telefone?: string | null;
+}): UiUser {
+  return {
+    id: row.id,
+    nome: row.nomeCompleto,
+    email: row.email,
+    role: row.role,
+    cidade: String(row.cidade ?? "").trim() || "Não informado",
+    telefone: String(row.telefone ?? "").trim() || "Não informado",
+  };
+}
 
-  const [detailUser, setDetailUser] = React.useState<ManagedUser | null>(null);
-  const [editDraft, setEditDraft] = React.useState<ManagedUser | null>(null);
+export function AdminUsersManagementPageContent({ scope = "leilao" }: { scope?: UsersScreenScope }) {
+  const { toast } = useToast();
+  const [users, setUsers] = React.useState<UiUser[]>([]);
+  const [detailsById, setDetailsById] = React.useState<Record<string, AdminUsuarioResponse>>({});
+  const [loading, setLoading] = React.useState(true);
+  const [search, setSearch] = React.useState("");
+  const [searchDebounced, setSearchDebounced] = React.useState("");
+  const [statusFilter, setStatusFilter] = React.useState<UiStatusFilter>("todos");
+  const [roleFilter, setRoleFilter] = React.useState("todos");
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [totalPages, setTotalPages] = React.useState(1);
+
+  const [detailUser, setDetailUser] = React.useState<AdminUsuarioResponse | null>(null);
+  const [editDraft, setEditDraft] = React.useState<AdminUsuarioResponse | null>(null);
+
+  const [loadingDetailId, setLoadingDetailId] = React.useState<string | null>(null);
+  const [savingEdit, setSavingEdit] = React.useState(false);
+  const [togglingStatusId, setTogglingStatusId] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const t = window.setTimeout(() => setSearchDebounced(search.trim()), 300);
+    return () => window.clearTimeout(t);
+  }, [search]);
+
+  const loadPage = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const page = await listarUsuariosAdmin({
+        busca: searchDebounced || undefined,
+        page: currentPage - 1,
+        size: PAGE_SIZE,
+      });
+      const mapped = (page.content ?? []).map(toUiUser);
+      setUsers(mapped);
+      setTotalPages(Math.max(1, page.totalPages || 1));
+
+      // Busca detalhada por usuário para liberar status/ações na listagem.
+      const detailsResults = await Promise.all(
+        mapped.map(async (user) => {
+          try {
+            const detail = await buscarUsuarioAdminPorId(user.id);
+            return { id: user.id, detail };
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      setDetailsById((prev) => {
+        const next = { ...prev };
+        for (const result of detailsResults) {
+          if (!result) continue;
+          next[result.id] = result.detail;
+        }
+        return next;
+      });
+    } catch (error) {
+      setUsers([]);
+      setTotalPages(1);
+      toast({
+        type: "error",
+        title: "Falha ao carregar usuários",
+        description: parseApiError(error),
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, searchDebounced, toast]);
+
+  React.useEffect(() => {
+    void loadPage();
+  }, [loadPage]);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchDebounced]);
 
   const filteredUsers = React.useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
     return users.filter((user) => {
-      if (statusFilter === "ativos" && !user.ativo) return false;
-      if (statusFilter === "inativos" && user.ativo) return false;
-      if (roleFilter !== "todos" && user.role !== roleFilter) return false;
-      if (!normalizedSearch) return true;
-
-      const haystack = `${user.nome} ${user.email} ${user.role}`.toLowerCase();
-      return haystack.includes(normalizedSearch);
+      if (roleFilter !== "todos" && String(user.role).toUpperCase() !== roleFilter) return false;
+      if (statusFilter === "todos") return true;
+      const detail = detailsById[user.id];
+      const isActive = Boolean(detail?.emailVerificado);
+      if (statusFilter === "ativos") return isActive;
+      return !isActive;
     });
-  }, [roleFilter, search, statusFilter, users]);
+  }, [detailsById, roleFilter, statusFilter, users]);
 
-  const toggleUserStatus = React.useCallback((id: string) => {
-    setUsers((prev) => prev.map((user) => (user.id === id ? { ...user, ativo: !user.ativo } : user)));
-    setDetailUser((prev) => (prev && prev.id === id ? { ...prev, ativo: !prev.ativo } : prev));
-    setEditDraft((prev) => (prev && prev.id === id ? { ...prev, ativo: !prev.ativo } : prev));
-  }, []);
+  const ensureDetail = React.useCallback(
+    async (id: string): Promise<AdminUsuarioResponse | null> => {
+      const cached = detailsById[id];
+      if (cached) return cached;
+      try {
+        const detail = await buscarUsuarioAdminPorId(id);
+        setDetailsById((prev) => ({ ...prev, [id]: detail }));
+        return detail;
+      } catch (error) {
+        toast({
+          type: "error",
+          title: "Falha ao carregar detalhes",
+          description: parseApiError(error),
+        });
+        return null;
+      }
+    },
+    [detailsById, toast]
+  );
 
-  const saveEdit = React.useCallback(() => {
+  const openDetail = React.useCallback(
+    async (id: string) => {
+      setLoadingDetailId(id);
+      const detail = await ensureDetail(id);
+      setLoadingDetailId(null);
+      if (detail) setDetailUser(detail);
+    },
+    [ensureDetail]
+  );
+
+  const openEdit = React.useCallback(
+    async (id: string) => {
+      setLoadingDetailId(id);
+      const detail = await ensureDetail(id);
+      setLoadingDetailId(null);
+      if (detail) setEditDraft(detail);
+    },
+    [ensureDetail]
+  );
+
+  const toggleUserStatus = React.useCallback(
+    async (id: string) => {
+      setTogglingStatusId(id);
+      try {
+        const current = await ensureDetail(id);
+        if (!current) return;
+        const updated = await editarUsuarioAdminParcial(id, {
+          emailVerificado: !Boolean(current.emailVerificado),
+        });
+        setDetailsById((prev) => ({ ...prev, [id]: updated }));
+        setDetailUser((prev) => (prev && prev.id === id ? updated : prev));
+        setEditDraft((prev) => (prev && prev.id === id ? updated : prev));
+      } catch (error) {
+        toast({
+          type: "error",
+          title: "Falha ao atualizar status",
+          description: parseApiError(error),
+        });
+      } finally {
+        setTogglingStatusId(null);
+      }
+    },
+    [ensureDetail, toast]
+  );
+
+  const saveEdit = React.useCallback(async () => {
     if (!editDraft) return;
-    const cleaned = {
-      ...editDraft,
-      nome: editDraft.nome.trim(),
-      email: editDraft.email.trim(),
-      cidade: editDraft.cidade.trim(),
-    };
-    if (!cleaned.nome || !cleaned.email) return;
+    const nomeCompleto = editDraft.nomeCompleto.trim();
+    const email = editDraft.email.trim();
+    if (!nomeCompleto || !email) {
+      toast({
+        type: "warning",
+        title: "Campos obrigatórios",
+        description: "Preencha nome e e-mail para salvar.",
+      });
+      return;
+    }
 
-    setUsers((prev) => prev.map((user) => (user.id === cleaned.id ? cleaned : user)));
-    setDetailUser((prev) => (prev && prev.id === cleaned.id ? cleaned : prev));
-    setEditDraft(null);
-  }, [editDraft]);
+    setSavingEdit(true);
+    try {
+      const payload = {
+        nomeCompleto,
+        dataNascimento: editDraft.dataNascimento ?? undefined,
+        email,
+        cpf: editDraft.cpf?.trim() || undefined,
+        telefone: editDraft.telefone?.trim() || undefined,
+        fotoPerfil: editDraft.fotoPerfil?.trim() || undefined,
+        cep: editDraft.cep?.trim() || undefined,
+        logradouro: editDraft.logradouro?.trim() || undefined,
+        cidade: editDraft.cidade?.trim() || undefined,
+        estado: editDraft.estado?.trim() || undefined,
+        emailVerificado: Boolean(editDraft.emailVerificado),
+      };
+
+      const current = detailsById[editDraft.id];
+      const roleChanged =
+        current && String(current.role).toUpperCase() !== String(editDraft.role).toUpperCase();
+
+      let updated = await editarUsuarioAdminParcial(editDraft.id, payload);
+      if (roleChanged) {
+        updated = await alterarCargoUsuarioAdmin(editDraft.id, { role: editDraft.role });
+      }
+
+      setDetailsById((prev) => ({ ...prev, [updated.id]: updated }));
+      setUsers((prev) =>
+        prev.map((user) =>
+          user.id === updated.id
+            ? toUiUser({
+                id: updated.id,
+                nomeCompleto: updated.nomeCompleto,
+                email: updated.email,
+                role: updated.role,
+                cidade: updated.cidade,
+                telefone: updated.telefone,
+              })
+            : user
+        )
+      );
+      setDetailUser((prev) => (prev && prev.id === updated.id ? updated : prev));
+      setEditDraft(null);
+      toast({
+        type: "success",
+        title: "Usuário atualizado",
+        description: "As alterações foram salvas com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        type: "error",
+        title: "Falha ao salvar usuário",
+        description: parseApiError(error),
+      });
+    } finally {
+      setSavingEdit(false);
+    }
+  }, [detailsById, editDraft, toast]);
 
   return (
     <div>
@@ -107,8 +325,8 @@ export function AdminUsersManagementPageContent({ scope = "leilao" }: { scope?: 
         title="Gestão de usuários"
         subtitle={
           scope === "marketplace"
-            ? "Tela em demonstração para acompanhar e gerenciar os usuários da plataforma."
-            : "Tela em demonstração com visão geral dos usuários da plataforma."
+            ? "Gerencie os usuários da plataforma com busca, filtros e ações rápidas."
+            : "Acompanhe todos os usuários do sistema e gerencie os cadastros em um só lugar."
         }
       />
 
@@ -119,7 +337,7 @@ export function AdminUsersManagementPageContent({ scope = "leilao" }: { scope?: 
             id="users-search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por nome, e-mail ou perfil..."
+            placeholder="Buscar por nome ou e-mail..."
             className="mt-1.5 rounded-2xl"
           />
         </div>
@@ -128,7 +346,7 @@ export function AdminUsersManagementPageContent({ scope = "leilao" }: { scope?: 
           <Select
             id="users-status-filter"
             value={statusFilter}
-            onValueChange={setStatusFilter}
+            onValueChange={(value) => setStatusFilter(value as UiStatusFilter)}
             options={STATUS_FILTER_OPTIONS}
             className="mt-1.5"
           />
@@ -146,95 +364,129 @@ export function AdminUsersManagementPageContent({ scope = "leilao" }: { scope?: 
       </div>
 
       <p className="mb-4 text-sm text-zinc-500">
-        {filteredUsers.length} {filteredUsers.length === 1 ? "usuário encontrado" : "usuários encontrados"}
+        {loading ? "Carregando usuários..." : `${filteredUsers.length} usuários encontrados nesta página`}
       </p>
 
-      {filteredUsers.length === 0 ? (
+      {loading ? (
+        <div className="rounded-2xl border border-zinc-200 bg-white px-6 py-14 text-center text-sm text-zinc-600">
+          Carregando lista de usuários...
+        </div>
+      ) : filteredUsers.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 px-6 py-14 text-center text-sm text-zinc-600">
           Nenhum usuário encontrado com os filtros atuais.
         </div>
       ) : (
         <ul className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {filteredUsers.map((user) => (
-            <li key={user.id} className="rounded-2xl border border-zinc-200 bg-white p-4">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <p className="text-base font-semibold text-zinc-900">{user.nome}</p>
-                  <p className="text-sm text-zinc-500">{user.email}</p>
+          {filteredUsers.map((user) => {
+            const detail = detailsById[user.id];
+            const isActive = Boolean(detail?.emailVerificado);
+            const isLoadingRow = loadingDetailId === user.id;
+            return (
+              <li key={user.id} className="rounded-2xl border border-zinc-200 bg-white p-4">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p className="text-base font-semibold text-zinc-900">{user.nome}</p>
+                    <p className="text-sm text-zinc-500">{user.email}</p>
+                  </div>
+                  <Badge variant={isActive ? "emerald" : "zinc"} size="sm" className="normal-case">
+                    {isActive ? "Ativo" : "Inativo"}
+                  </Badge>
                 </div>
-                <Badge variant={user.ativo ? "emerald" : "zinc"} size="sm" className="normal-case">
-                  {user.ativo ? "Ativo" : "Inativo"}
-                </Badge>
-              </div>
 
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <Badge variant={roleBadgeVariant(user.role)} size="sm" className="normal-case">
-                  {user.role}
-                </Badge>
-                <span className="text-xs text-zinc-500">{user.cidade}</span>
-              </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Badge variant={roleBadgeVariant(user.role)} size="sm" className="normal-case">
+                    {roleLabel(user.role)}
+                  </Badge>
+                  <span className="text-xs text-zinc-500">{user.cidade}</span>
+                </div>
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button type="button" size="sm" variant="secondary" className="rounded-full" onClick={() => setDetailUser(user)}>
-                  Ver detalhes
-                </Button>
-                <Button type="button" size="sm" variant="secondary" className="rounded-full" onClick={() => setEditDraft(user)}>
-                  Editar
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={user.ativo ? "ghost" : "default"}
-                  className="rounded-full"
-                  onClick={() => toggleUserStatus(user.id)}
-                >
-                  {user.ativo ? "Inativar" : "Ativar"}
-                </Button>
-              </div>
-            </li>
-          ))}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    className="rounded-full"
+                    onClick={() => void openDetail(user.id)}
+                    loading={isLoadingRow}
+                    disabled={isLoadingRow}
+                  >
+                    Ver detalhes
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    className="rounded-full"
+                    onClick={() => void openEdit(user.id)}
+                    loading={isLoadingRow}
+                    disabled={isLoadingRow}
+                  >
+                    Editar
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={isActive ? "ghost" : "default"}
+                    className="rounded-full"
+                    onClick={() => void toggleUserStatus(user.id)}
+                    loading={togglingStatusId === user.id}
+                    disabled={togglingStatusId === user.id}
+                  >
+                    {isActive ? "Inativar" : "Ativar"}
+                  </Button>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
 
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="mt-6" />
+
       <Sheet open={detailUser !== null} onClose={() => setDetailUser(null)} side="right">
-        <SheetContent className="max-w-[min(100vw-1rem,420px)] !w-full" onClose={() => setDetailUser(null)}>
+        <SheetContent className="max-w-[min(100vw-1rem,440px)] !w-full" onClose={() => setDetailUser(null)}>
           <SheetHeader>
             <SheetTitle>Detalhes do usuário</SheetTitle>
-            <SheetDescription>Visualização rápida dos dados do cadastro.</SheetDescription>
+            <SheetDescription>Informações completas do cadastro.</SheetDescription>
           </SheetHeader>
           {detailUser ? (
             <div className="mt-5 space-y-3">
-              <InfoRow label="Nome" value={detailUser.nome} />
+              <InfoRow label="Nome" value={detailUser.nomeCompleto} />
               <InfoRow label="E-mail" value={detailUser.email} />
-              <InfoRow label="Perfil" value={detailUser.role} />
-              <InfoRow label="Status" value={detailUser.ativo ? "Ativo" : "Inativo"} />
-              <InfoRow label="Cidade" value={detailUser.cidade} />
-              <InfoRow label="Criado em" value={detailUser.criadoEm} />
+              <InfoRow label="Perfil" value={roleLabel(detailUser.role)} />
+              <InfoRow label="Status" value={detailUser.emailVerificado ? "Ativo" : "Inativo"} />
+              <InfoRow label="Telefone" value={String(detailUser.telefone ?? "").trim() || "Não informado"} />
+              <InfoRow label="Cidade" value={String(detailUser.cidade ?? "").trim() || "Não informado"} />
+              <InfoRow label="Estado" value={String(detailUser.estado ?? "").trim() || "Não informado"} />
+              <InfoRow label="CPF" value={String(detailUser.cpf ?? "").trim() || "Não informado"} />
+              <InfoRow label="Criado em" value={detailUser.createdAt ? new Date(detailUser.createdAt).toLocaleString("pt-BR") : "-"} />
             </div>
           ) : null}
         </SheetContent>
       </Sheet>
 
       <Sheet open={editDraft !== null} onClose={() => setEditDraft(null)} side="right">
-        <SheetContent className="max-w-[min(100vw-1rem,420px)] !w-full" onClose={() => setEditDraft(null)}>
+        <SheetContent className="max-w-[min(100vw-1rem,440px)] !w-full" onClose={() => setEditDraft(null)}>
           <SheetHeader>
             <SheetTitle>Editar usuário</SheetTitle>
-            <SheetDescription>Tela em demonstração para edição de cadastro.</SheetDescription>
+            <SheetDescription>Atualize os dados do usuário.</SheetDescription>
           </SheetHeader>
           {editDraft ? (
             <form
               className="mt-5 space-y-4"
               onSubmit={(e) => {
                 e.preventDefault();
-                saveEdit();
+                void saveEdit();
               }}
             >
               <div>
                 <Label htmlFor="edit-user-name">Nome</Label>
                 <Input
                   id="edit-user-name"
-                  value={editDraft.nome}
-                  onChange={(e) => setEditDraft((prev) => (prev ? { ...prev, nome: e.target.value } : prev))}
+                  value={editDraft.nomeCompleto}
+                  onChange={(e) =>
+                    setEditDraft((prev) => (prev ? { ...prev, nomeCompleto: e.target.value } : prev))
+                  }
                   className="mt-1.5 rounded-2xl"
                 />
               </div>
@@ -244,7 +496,42 @@ export function AdminUsersManagementPageContent({ scope = "leilao" }: { scope?: 
                   id="edit-user-email"
                   type="email"
                   value={editDraft.email}
-                  onChange={(e) => setEditDraft((prev) => (prev ? { ...prev, email: e.target.value } : prev))}
+                  onChange={(e) =>
+                    setEditDraft((prev) => (prev ? { ...prev, email: e.target.value } : prev))
+                  }
+                  className="mt-1.5 rounded-2xl"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-user-phone">Telefone</Label>
+                <Input
+                  id="edit-user-phone"
+                  value={editDraft.telefone ?? ""}
+                  onChange={(e) =>
+                    setEditDraft((prev) => (prev ? { ...prev, telefone: e.target.value } : prev))
+                  }
+                  className="mt-1.5 rounded-2xl"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-user-city">Cidade</Label>
+                <Input
+                  id="edit-user-city"
+                  value={editDraft.cidade ?? ""}
+                  onChange={(e) =>
+                    setEditDraft((prev) => (prev ? { ...prev, cidade: e.target.value } : prev))
+                  }
+                  className="mt-1.5 rounded-2xl"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-user-state">Estado</Label>
+                <Input
+                  id="edit-user-state"
+                  value={editDraft.estado ?? ""}
+                  onChange={(e) =>
+                    setEditDraft((prev) => (prev ? { ...prev, estado: e.target.value } : prev))
+                  }
                   className="mt-1.5 rounded-2xl"
                 />
               </div>
@@ -252,29 +539,24 @@ export function AdminUsersManagementPageContent({ scope = "leilao" }: { scope?: 
                 <Label htmlFor="edit-user-role">Perfil</Label>
                 <Select
                   id="edit-user-role"
-                  value={editDraft.role}
+                  value={String(editDraft.role)}
                   onValueChange={(value) =>
-                    setEditDraft((prev) => (prev ? { ...prev, role: value as UserRole } : prev))
+                    setEditDraft((prev) => (prev ? { ...prev, role: value as AdminUsuarioRoleApi } : prev))
                   }
-                  options={ROLE_EDIT_OPTIONS}
+                  options={ROLE_FILTER_OPTIONS.filter((option) => option.value !== "todos")}
                   className="mt-1.5"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-user-city">Cidade</Label>
-                <Input
-                  id="edit-user-city"
-                  value={editDraft.cidade}
-                  onChange={(e) => setEditDraft((prev) => (prev ? { ...prev, cidade: e.target.value } : prev))}
-                  className="mt-1.5 rounded-2xl"
                 />
               </div>
               <div className="flex items-center gap-2.5 rounded-2xl bg-zinc-50 px-3 py-3 ring-1 ring-zinc-100">
                 <input
                   id="edit-user-active"
                   type="checkbox"
-                  checked={editDraft.ativo}
-                  onChange={(e) => setEditDraft((prev) => (prev ? { ...prev, ativo: e.target.checked } : prev))}
+                  checked={Boolean(editDraft.emailVerificado)}
+                  onChange={(e) =>
+                    setEditDraft((prev) =>
+                      prev ? { ...prev, emailVerificado: e.target.checked } : prev
+                    )
+                  }
                   className="h-4 w-4 rounded border-zinc-300 text-[var(--nulance-purple)] focus:ring-[var(--ring)]"
                 />
                 <Label htmlFor="edit-user-active" className="mb-0 cursor-pointer text-zinc-800">
@@ -282,10 +564,10 @@ export function AdminUsersManagementPageContent({ scope = "leilao" }: { scope?: 
                 </Label>
               </div>
               <div className="pt-2 flex flex-col gap-2 sm:flex-row sm:justify-end">
-                <Button type="button" variant="secondary" className="rounded-full" onClick={() => setEditDraft(null)}>
+                <Button type="button" variant="secondary" className="rounded-full" onClick={() => setEditDraft(null)} disabled={savingEdit}>
                   Cancelar
                 </Button>
-                <Button type="submit" className="rounded-full">
+                <Button type="submit" className="rounded-full" loading={savingEdit} disabled={savingEdit}>
                   Salvar alterações
                 </Button>
               </div>

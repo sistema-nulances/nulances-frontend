@@ -126,7 +126,7 @@ export function MarketplaceAdminDashboard() {
             </li>
             <li>
               <Link
-                href="/admin/marketplace/avisos"
+                href="/admin/marketplace/usuarios"
                 className="font-medium text-[var(--nulance-purple)] hover:underline"
               >
                 Gestão de usuários →

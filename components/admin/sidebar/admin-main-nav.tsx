@@ -43,7 +43,7 @@ export function AdminMainNav({
     { href: "/admin/lotes", label: "Lotes", icon: PackageIcon },
     { href: "/admin/bens-itens", label: "Bens / Itens", icon: ShoppingBag01Icon },
     { href: "/admin/banners", label: "Banners", icon: Megaphone01Icon },
-    { href: "/admin/avisos", label: "Gestão de usuários", icon: UserMultipleIcon },
+    { href: "/admin/usuarios", label: "Gestão de usuários", icon: UserMultipleIcon },
   ];
 
   const marketplaceItems: NavItem[] = [
@@ -64,7 +64,7 @@ export function AdminMainNav({
       icon: UserMultipleIcon,
     },
     { href: "/admin/marketplace/banners", label: "Banners", icon: Megaphone01Icon },
-    { href: "/admin/marketplace/avisos", label: "Gestão de usuários", icon: UserMultipleIcon },
+    { href: "/admin/marketplace/usuarios", label: "Gestão de usuários", icon: UserMultipleIcon },
   ];
 
   const navItems = isMarketplace ? marketplaceItems : leilaoItems;

@@ -1,5 +1,5 @@
-import { AdminUsersManagementPageContent } from "@/components/admin/users/admin-users-management-page-content";
+import { redirect } from "next/navigation";
 
-export default function AdminUsersPage() {
-  return <AdminUsersManagementPageContent scope="leilao" />;
+export default function AdminAvisosRedirectPage() {
+  redirect("/admin/usuarios");
 }
