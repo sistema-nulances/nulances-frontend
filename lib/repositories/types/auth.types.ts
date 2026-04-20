@@ -74,6 +74,10 @@ export type ConfirmarEmailRequest = {
   codigo: string;
 };
 
+export type ReenviarCodigoRequest = {
+  email: string;
+};
+
 export type ForgotPasswordRequest = {
   email: string;
 };

@@ -32,7 +32,7 @@ function AuthLoginInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { login, confirmarEmail, isAuthenticated, status } = useAuth();
+  const { login, confirmarEmail, reenviarCodigo, isAuthenticated, status } = useAuth();
 
   const [showPassword, setShowPassword] = React.useState(false);
   const [email, setEmail] = React.useState("");
@@ -132,13 +132,33 @@ function AuthLoginInner() {
     [confirmarEmail, email, login, password, router, returnUrl, toast]
   );
 
-  const handleOtpResend = React.useCallback(() => {
-    toast({
-      type: "info",
-      title: "Reenvio",
-      description: `Se o backend expuser um endpoint de reenvio, conecte aqui. Por ora, verifique a caixa de entrada de ${email.trim() || "seu e-mail"}.`,
-    });
-  }, [email, toast]);
+  const handleOtpResend = React.useCallback(async () => {
+    const sanitizedEmail = email.trim();
+    if (!sanitizedEmail) {
+      toast({
+        type: "error",
+        title: "E-mail obrigatório",
+        description: "Informe seu e-mail para reenviar o código.",
+      });
+      return;
+    }
+
+    try {
+      await reenviarCodigo({ email: sanitizedEmail });
+      toast({
+        type: "success",
+        title: "Código reenviado",
+        description: `Enviamos um novo código para ${sanitizedEmail}.`,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Não foi possível reenviar o código.";
+      toast({
+        type: "error",
+        title: "Falha ao reenviar",
+        description: msg,
+      });
+    }
+  }, [email, reenviarCodigo, toast]);
 
   return (
     <div className="flex min-h-screen flex-col bg-[var(--background)]">

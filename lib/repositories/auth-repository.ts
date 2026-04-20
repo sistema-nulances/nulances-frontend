@@ -10,6 +10,7 @@ import type {
   LoginRequest,
   LoginResponse,
   MeResponse,
+  ReenviarCodigoRequest,
   ResetPasswordRequest,
   RegisterRequest,
   UploadFotoPerfilResponse,
@@ -60,6 +61,14 @@ export async function verificarDisponibilidadeCadastro(params: {
 
 export async function confirmarEmail(body: ConfirmarEmailRequest): Promise<void> {
   await apiFetch<unknown>("/auth/confirmar-email", {
+    method: "POST",
+    skipAuth: true,
+    body: JSON.stringify(body),
+  });
+}
+
+export async function reenviarCodigo(body: ReenviarCodigoRequest): Promise<void> {
+  await apiFetch<unknown>("/auth/reenviar-codigo", {
     method: "POST",
     skipAuth: true,
     body: JSON.stringify(body),

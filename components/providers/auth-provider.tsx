@@ -39,6 +39,7 @@ type AuthContextValue = {
   refreshUser: () => Promise<void>;
   register: (body: Parameters<typeof authRepo.register>[0]) => Promise<void>;
   confirmarEmail: (body: Parameters<typeof authRepo.confirmarEmail>[0]) => Promise<void>;
+  reenviarCodigo: (body: Parameters<typeof authRepo.reenviarCodigo>[0]) => Promise<void>;
 };
 
 const AuthContext = React.createContext<AuthContextValue | null>(null);
@@ -154,6 +155,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await authRepo.confirmarEmail(body);
   }, []);
 
+  const reenviarCodigo = React.useCallback(async (body: Parameters<typeof authRepo.reenviarCodigo>[0]) => {
+    await authRepo.reenviarCodigo(body);
+  }, []);
+
   const value = React.useMemo<AuthContextValue>(() => {
     const nome = primeiroNome(user?.nomeCompleto);
     const role = user?.role;
@@ -172,8 +177,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refreshUser: () => refreshUser(),
       register,
       confirmarEmail,
+      reenviarCodigo,
     };
-  }, [status, user, login, logout, refreshUser, register, confirmarEmail]);
+  }, [status, user, login, logout, refreshUser, register, confirmarEmail, reenviarCodigo]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
