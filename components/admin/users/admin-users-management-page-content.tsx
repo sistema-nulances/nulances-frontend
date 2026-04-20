@@ -39,10 +39,8 @@ const PAGE_SIZE = 10;
 const ROLE_FILTER_OPTIONS: SelectOption[] = [
   { value: "todos", label: "Todos os perfis" },
   { value: "ADMIN", label: "Administrador" },
-  { value: "LEILOEIRO", label: "Leiloeiro" },
-  { value: "COMITENTE", label: "Comitente" },
   { value: "VENDEDOR", label: "Vendedor" },
-  { value: "COMPRADOR", label: "Comprador" },
+  { value: "COMPRADOR", label: "Comum" },
 ];
 
 function parseApiError(error: unknown): string {
@@ -54,18 +52,14 @@ function parseApiError(error: unknown): string {
 function roleLabel(role: string): string {
   const code = String(role).toUpperCase();
   if (code === "ADMIN") return "Administrador";
-  if (code === "LEILOEIRO") return "Leiloeiro";
-  if (code === "COMITENTE") return "Comitente";
   if (code === "VENDEDOR") return "Vendedor";
-  if (code === "COMPRADOR") return "Comprador";
-  return role;
+  return "Comum";
 }
 
 function roleBadgeVariant(role: string): "purple" | "emerald" | "amber" | "zinc" {
   const code = String(role).toUpperCase();
   if (code === "ADMIN") return "purple";
   if (code === "VENDEDOR") return "emerald";
-  if (code === "LEILOEIRO" || code === "COMITENTE") return "amber";
   return "zinc";
 }
 

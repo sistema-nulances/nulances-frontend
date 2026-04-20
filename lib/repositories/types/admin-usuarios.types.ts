@@ -1,7 +1,5 @@
 export type AdminUsuarioRoleApi =
   | "ADMIN"
-  | "LEILOEIRO"
-  | "COMITENTE"
   | "VENDEDOR"
   | "COMPRADOR"
   | (string & {});
