@@ -13,13 +13,9 @@ export const BEM_TIPOS_VEICULO = [
 export type BemTipoVeiculo = (typeof BEM_TIPOS_VEICULO)[number];
 
 export const BEM_CONDICOES = [
-  "Conservado",
-  "Recuperável",
-  "Sucata",
-  "Trabalho Pesado",
-  "Ótimo Estado",
+  "Pequena monta",
   "Média monta",
-  "Sinistrado",
+  "Grande monta",
 ] as const;
 
 export type BemCondicao = (typeof BEM_CONDICOES)[number];

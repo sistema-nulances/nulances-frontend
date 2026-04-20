@@ -220,7 +220,7 @@ function pendingToAdmin(): MarketplaceAnuncioAdmin[] {
       categoria: p.categoria,
       status: "EM_BREVE",
       titulo: p.titulo,
-      condicao: "Conservado",
+      condicao: "Média monta",
       marca,
       modelo,
       ano: "—",

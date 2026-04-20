@@ -10,13 +10,9 @@ export type TipoVeiculoAnuncioApi =
   | "OUTRO";
 
 export type CondicaoAnuncioVeiculoApi =
-  | "CONSERVADO"
-  | "RECUPERAVEL"
-  | "SUCATA"
-  | "TRABALHO_PESADO"
-  | "OTIMO_ESTADO"
   | "MEDIA_MONTA"
-  | "SINISTRADO";
+  | "PEQUENA_MONTA"
+  | "GRANDE_MONTA";
 
 export type CombustivelVeiculoApi =
   | "FLEX"

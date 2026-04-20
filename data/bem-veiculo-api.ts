@@ -14,12 +14,9 @@ export const BEM_TIPO_VEICULO_API: SelectOption[] = [
 
 export const BEM_CONDICAO_API: SelectOption[] = [
   { value: "", label: "Selecione a condição" },
-  { value: "CONSERVADO", label: "Conservado" },
-  { value: "RECUPERAVEL", label: "Recuperável" },
-  { value: "SUCATA", label: "Sucata" },
-  { value: "TRABALHO_PESADO", label: "Trabalho pesado" },
-  { value: "OTIMO_ESTADO", label: "Ótimo estado" },
+  { value: "PEQUENA_MONTA", label: "Pequena monta" },
   { value: "MEDIA_MONTA", label: "Média monta" },
+  { value: "GRANDE_MONTA", label: "Grande monta" },
 ];
 
 export const BEM_COMBUSTIVEL_API: SelectOption[] = [

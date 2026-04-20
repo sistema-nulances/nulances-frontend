@@ -25,14 +25,14 @@ const LEILAO_ITEMS: Item[] = [
   { href: "/admin/leiloes", label: "Leilões", icon: AuctionIcon, match: (p) => p.startsWith("/admin/leiloes") },
   { href: "/admin/lotes", label: "Lotes", icon: ShoppingBag01Icon, match: (p) => p.startsWith("/admin/lotes") || p.startsWith("/admin/bens-itens") },
   { href: "/admin/comitentes", label: "Pessoas", icon: UserMultipleIcon, match: (p) => p.startsWith("/admin/comitentes") || p.startsWith("/admin/leiloeiros") },
-  { href: "/admin/avisos", label: "Avisos", icon: Alert02Icon, match: (p) => p.startsWith("/admin/avisos") || p.startsWith("/admin/banners") || p.startsWith("/admin/documentos") },
+  { href: "/admin/avisos", label: "Gestão de usuários", icon: Alert02Icon, match: (p) => p.startsWith("/admin/avisos") || p.startsWith("/admin/banners") || p.startsWith("/admin/documentos") },
 ];
 
 const MARKETPLACE_ITEMS: Item[] = [
   { href: "/admin/marketplace/dashboard", label: "Dashboard", icon: Home09Icon, match: (p) => p === "/admin/marketplace/dashboard" || p === "/admin/marketplace" },
   { href: "/admin/marketplace/anuncios", label: "Anúncios", icon: ShoppingBag01Icon, match: (p) => p.startsWith("/admin/marketplace/anuncios") },
   { href: "/admin/marketplace/vendedores", label: "Vendedores", icon: UserMultipleIcon, match: (p) => p.startsWith("/admin/marketplace/vendedores") },
-  { href: "/admin/marketplace/avisos", label: "Avisos", icon: Alert02Icon, match: (p) => p.startsWith("/admin/marketplace/avisos") || p.startsWith("/admin/marketplace/banners") },
+  { href: "/admin/marketplace/avisos", label: "Gestão de usuários", icon: Alert02Icon, match: (p) => p.startsWith("/admin/marketplace/avisos") || p.startsWith("/admin/marketplace/banners") },
   { href: "/admin/marketplace/dashboard", label: "Leilão", icon: AuctionIcon, match: () => false },
 ];
 

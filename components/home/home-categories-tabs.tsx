@@ -147,7 +147,7 @@ function HomeAuctionFilterForm({
       <div>
         <h3 className="mb-4 text-[15px] font-semibold tracking-[-0.02em] text-zinc-900">Condição</h3>
         <div className="flex flex-wrap gap-2">
-          {["Conservado", "Recuperável", "Sucata", "Trabalho Pesado", "Ótimo Estado"].map((item) => {
+          {["Pequena monta", "Média monta", "Grande monta"].map((item) => {
             const isActive = selectedCondicao.includes(item);
             return (
               <button

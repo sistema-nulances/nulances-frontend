@@ -38,13 +38,9 @@ const TIPO_OPTIONS: SelectOption[] = [
 ];
 
 const CONDICAO_OPTIONS: SelectOption[] = [
-  { value: "CONSERVADO", label: "Conservado" },
-  { value: "RECUPERAVEL", label: "Recuperável" },
-  { value: "SUCATA", label: "Sucata" },
-  { value: "TRABALHO_PESADO", label: "Trabalho pesado" },
-  { value: "OTIMO_ESTADO", label: "Ótimo estado" },
+  { value: "PEQUENA_MONTA", label: "Pequena monta" },
   { value: "MEDIA_MONTA", label: "Média monta" },
-  { value: "SINISTRADO", label: "Sinistrado" },
+  { value: "GRANDE_MONTA", label: "Grande monta" },
 ];
 
 const COMBUSTIVEL_OPTIONS: SelectOption[] = [

@@ -362,10 +362,8 @@ function parsePrecoToNumber(precoFmt: string): number | undefined {
 
 function labelCondicaoForSheet(raw: string | null | undefined): string {
   const code = resolveApiEnumValue(raw, BEM_CONDICAO_API);
-  if (!code) return "Conservado";
-  if (code === "TRABALHO_PESADO") return "Trabalho Pesado";
-  if (code === "OTIMO_ESTADO") return "Ótimo Estado";
-  return labelCondicaoApi(code) || String(raw ?? "").trim() || "Conservado";
+  if (!code) return "Pequena monta";
+  return labelCondicaoApi(code) || String(raw ?? "").trim() || "Pequena monta";
 }
 
 function mapAnuncioResponseToRow(response: AnuncioResponse): MarketplaceAnuncioAdmin {
@@ -565,7 +563,7 @@ function mapSellerApiToRow(item: AnuncioVendedorListResponse): MarketplaceAnunci
     categoria: "carros",
     status: statusModeracao === "aprovado" ? "ABERTO" : "EM_BREVE",
     titulo: titulo || "Anúncio",
-    condicao: "Conservado",
+    condicao: "Pequena monta",
     marca: marcaCode || marcaLabel,
     modelo,
     ano: "—",
@@ -616,7 +614,7 @@ function mapAdminApiToRow(item: AnuncioAdminListResponse): MarketplaceAnuncioAdm
     categoria: "carros",
     status: statusModeracao === "aprovado" ? "ABERTO" : "EM_BREVE",
     titulo: titulo || "Anúncio",
-    condicao: "Conservado",
+    condicao: "Pequena monta",
     marca: marcaCode || marcaLabel,
     modelo,
     ano: "—",
@@ -653,7 +651,7 @@ function createDraftAnuncio(seedId: number): MarketplaceAnuncioAdmin {
     categoria: "carros",
     status: "EM_BREVE",
     titulo: "",
-    condicao: "Conservado",
+    condicao: "Pequena monta",
     marca: "",
     modelo: "",
     ano: "",

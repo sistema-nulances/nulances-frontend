@@ -129,7 +129,7 @@ export function MarketplaceAdminDashboard() {
                 href="/admin/marketplace/avisos"
                 className="font-medium text-[var(--nulance-purple)] hover:underline"
               >
-                Avisos →
+                Gestão de usuários →
               </Link>
             </li>
           </ul>

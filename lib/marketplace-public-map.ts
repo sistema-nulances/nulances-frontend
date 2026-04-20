@@ -89,7 +89,7 @@ export function mapAnuncioPublicoListToMarketplaceItem(row: AnuncioPublicoListRe
   const modelo = String(row.modelo ?? "").trim() || "—";
   const titulo = [marca, modelo].filter((x) => x && x !== "—").join(" ").trim() || "Anúncio";
   const cidade = String(row.cidade ?? "").trim() || "—";
-  const condicaoLabel = labelCondicaoApi(row.condicao) || "Conservado";
+  const condicaoLabel = labelCondicaoApi(row.condicao) || "Pequena monta";
 
   return {
     id: String(row.id ?? ""),
@@ -119,7 +119,7 @@ export function mapAnuncioPublicoDetalheToMarketplaceItem(
   const titulo = [marca, modelo].filter((x) => x && x !== "—").join(" ").trim() || "Anúncio";
   const cidade = String(row.cidade ?? "").trim() || "—";
   const imagens = mapAnuncioPublicoMidiasToUrls(row.imagens);
-  const condicaoLabel = labelCondicaoApi(row.condicao) || "Conservado";
+  const condicaoLabel = labelCondicaoApi(row.condicao) || "Pequena monta";
 
   return {
     id: String(row.id ?? ""),

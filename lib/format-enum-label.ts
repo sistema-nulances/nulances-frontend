@@ -1,5 +1,5 @@
 /**
- * Exibe enums vindos da API (ex.: GASOLINA, AUTOMATICO, SUCATA) com apenas a primeira letra maiúscula.
+ * Exibe enums vindos da API (ex.: GASOLINA, AUTOMATICO, GRANDE_MONTA) com apenas a primeira letra maiúscula.
  */
 export function formatEnumDisplayLabel(value?: string | null): string {
   if (value == null) return "-";
