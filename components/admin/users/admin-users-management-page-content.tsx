@@ -34,15 +34,7 @@ type UiUser = {
   telefone: string;
 };
 
-type UiStatusFilter = "todos" | "ativos" | "inativos";
-
 const PAGE_SIZE = 10;
-
-const STATUS_FILTER_OPTIONS: SelectOption[] = [
-  { value: "todos", label: "Todos os status" },
-  { value: "ativos", label: "Ativos" },
-  { value: "inativos", label: "Inativos" },
-];
 
 const ROLE_FILTER_OPTIONS: SelectOption[] = [
   { value: "todos", label: "Todos os perfis" },
@@ -102,7 +94,6 @@ export function AdminUsersManagementPageContent({ scope = "leilao" }: { scope?: 
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
   const [searchDebounced, setSearchDebounced] = React.useState("");
-  const [statusFilter, setStatusFilter] = React.useState<UiStatusFilter>("todos");
   const [roleFilter, setRoleFilter] = React.useState("todos");
   const [currentPage, setCurrentPage] = React.useState(1);
   const [totalPages, setTotalPages] = React.useState(1);
@@ -112,7 +103,6 @@ export function AdminUsersManagementPageContent({ scope = "leilao" }: { scope?: 
 
   const [loadingDetailId, setLoadingDetailId] = React.useState<string | null>(null);
   const [savingEdit, setSavingEdit] = React.useState(false);
-  const [togglingStatusId, setTogglingStatusId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const t = window.setTimeout(() => setSearchDebounced(search.trim()), 300);
@@ -131,7 +121,7 @@ export function AdminUsersManagementPageContent({ scope = "leilao" }: { scope?: 
       setUsers(mapped);
       setTotalPages(Math.max(1, page.totalPages || 1));
 
-      // Busca detalhada por usuário para liberar status/ações na listagem.
+      // Busca detalhada por usuário para ações de detalhes/edição.
       const detailsResults = await Promise.all(
         mapped.map(async (user) => {
           try {
@@ -175,13 +165,9 @@ export function AdminUsersManagementPageContent({ scope = "leilao" }: { scope?: 
   const filteredUsers = React.useMemo(() => {
     return users.filter((user) => {
       if (roleFilter !== "todos" && String(user.role).toUpperCase() !== roleFilter) return false;
-      if (statusFilter === "todos") return true;
-      const detail = detailsById[user.id];
-      const isActive = Boolean(detail?.emailVerificado);
-      if (statusFilter === "ativos") return isActive;
-      return !isActive;
+      return true;
     });
-  }, [detailsById, roleFilter, statusFilter, users]);
+  }, [roleFilter, users]);
 
   const ensureDetail = React.useCallback(
     async (id: string): Promise<AdminUsuarioResponse | null> => {
@@ -221,31 +207,6 @@ export function AdminUsersManagementPageContent({ scope = "leilao" }: { scope?: 
       if (detail) setEditDraft(detail);
     },
     [ensureDetail]
-  );
-
-  const toggleUserStatus = React.useCallback(
-    async (id: string) => {
-      setTogglingStatusId(id);
-      try {
-        const current = await ensureDetail(id);
-        if (!current) return;
-        const updated = await editarUsuarioAdminParcial(id, {
-          emailVerificado: !Boolean(current.emailVerificado),
-        });
-        setDetailsById((prev) => ({ ...prev, [id]: updated }));
-        setDetailUser((prev) => (prev && prev.id === id ? updated : prev));
-        setEditDraft((prev) => (prev && prev.id === id ? updated : prev));
-      } catch (error) {
-        toast({
-          type: "error",
-          title: "Falha ao atualizar status",
-          description: parseApiError(error),
-        });
-      } finally {
-        setTogglingStatusId(null);
-      }
-    },
-    [ensureDetail, toast]
   );
 
   const saveEdit = React.useCallback(async () => {
@@ -342,16 +303,6 @@ export function AdminUsersManagementPageContent({ scope = "leilao" }: { scope?: 
           />
         </div>
         <div>
-          <Label htmlFor="users-status-filter">Status</Label>
-          <Select
-            id="users-status-filter"
-            value={statusFilter}
-            onValueChange={(value) => setStatusFilter(value as UiStatusFilter)}
-            options={STATUS_FILTER_OPTIONS}
-            className="mt-1.5"
-          />
-        </div>
-        <div>
           <Label htmlFor="users-role-filter">Perfil</Label>
           <Select
             id="users-role-filter"
@@ -378,8 +329,6 @@ export function AdminUsersManagementPageContent({ scope = "leilao" }: { scope?: 
       ) : (
         <ul className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {filteredUsers.map((user) => {
-            const detail = detailsById[user.id];
-            const isActive = Boolean(detail?.emailVerificado);
             const isLoadingRow = loadingDetailId === user.id;
             return (
               <li key={user.id} className="rounded-2xl border border-zinc-200 bg-white p-4">
@@ -388,9 +337,6 @@ export function AdminUsersManagementPageContent({ scope = "leilao" }: { scope?: 
                     <p className="text-base font-semibold text-zinc-900">{user.nome}</p>
                     <p className="text-sm text-zinc-500">{user.email}</p>
                   </div>
-                  <Badge variant={isActive ? "emerald" : "zinc"} size="sm" className="normal-case">
-                    {isActive ? "Ativo" : "Inativo"}
-                  </Badge>
                 </div>
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -423,17 +369,6 @@ export function AdminUsersManagementPageContent({ scope = "leilao" }: { scope?: 
                   >
                     Editar
                   </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={isActive ? "ghost" : "default"}
-                    className="rounded-full"
-                    onClick={() => void toggleUserStatus(user.id)}
-                    loading={togglingStatusId === user.id}
-                    disabled={togglingStatusId === user.id}
-                  >
-                    {isActive ? "Inativar" : "Ativar"}
-                  </Button>
                 </div>
               </li>
             );
@@ -454,7 +389,6 @@ export function AdminUsersManagementPageContent({ scope = "leilao" }: { scope?: 
               <InfoRow label="Nome" value={detailUser.nomeCompleto} />
               <InfoRow label="E-mail" value={detailUser.email} />
               <InfoRow label="Perfil" value={roleLabel(detailUser.role)} />
-              <InfoRow label="Status" value={detailUser.emailVerificado ? "Ativo" : "Inativo"} />
               <InfoRow label="Telefone" value={String(detailUser.telefone ?? "").trim() || "Não informado"} />
               <InfoRow label="Cidade" value={String(detailUser.cidade ?? "").trim() || "Não informado"} />
               <InfoRow label="Estado" value={String(detailUser.estado ?? "").trim() || "Não informado"} />
@@ -546,22 +480,6 @@ export function AdminUsersManagementPageContent({ scope = "leilao" }: { scope?: 
                   options={ROLE_FILTER_OPTIONS.filter((option) => option.value !== "todos")}
                   className="mt-1.5"
                 />
-              </div>
-              <div className="flex items-center gap-2.5 rounded-2xl bg-zinc-50 px-3 py-3 ring-1 ring-zinc-100">
-                <input
-                  id="edit-user-active"
-                  type="checkbox"
-                  checked={Boolean(editDraft.emailVerificado)}
-                  onChange={(e) =>
-                    setEditDraft((prev) =>
-                      prev ? { ...prev, emailVerificado: e.target.checked } : prev
-                    )
-                  }
-                  className="h-4 w-4 rounded border-zinc-300 text-[var(--nulance-purple)] focus:ring-[var(--ring)]"
-                />
-                <Label htmlFor="edit-user-active" className="mb-0 cursor-pointer text-zinc-800">
-                  Ativo na plataforma
-                </Label>
               </div>
               <div className="pt-2 flex flex-col gap-2 sm:flex-row sm:justify-end">
                 <Button type="button" variant="secondary" className="rounded-full" onClick={() => setEditDraft(null)} disabled={savingEdit}>
