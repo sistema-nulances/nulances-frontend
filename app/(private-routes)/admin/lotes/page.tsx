@@ -271,7 +271,7 @@ export default function AdminLotesPage() {
     <>
       <PageHeader
         title="Lotes"
-        subtitle="Lotes vêm da API (/admin/lotes). Código e vínculo dos bens são definidos pelo backend. Cards de totais usam /admin/lotes/stats."
+        subtitle="Organize seus lotes com facilidade: acompanhe os códigos, os bens vinculados e um resumo rápido dos totais em um só lugar."
         action={
           <Button
             type="button"

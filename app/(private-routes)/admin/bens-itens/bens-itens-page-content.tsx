@@ -595,7 +595,7 @@ export function BensItensPageContent() {
     <>
       <PageHeader
         title="Bens / Itens"
-        subtitle="Listagem paginada de bens. Cadastro, edição, exclusão e mídias (URL pré-assinada) seguem o backend. O catálogo global (até 500 itens) alimenta o picker de lotes."
+        subtitle="Gerencie os bens com praticidade: cadastre, edite, remova e organize as mídias em um só lugar. O catálogo completo também é usado na seleção de lotes."
         action={
           <Button type="button" size="md" className="rounded-full" onClick={openCreate}>
             <PlusIcon className="h-4 w-4" aria-hidden />

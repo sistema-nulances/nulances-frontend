@@ -38,14 +38,14 @@ const BANNER_ADMIN_CFG = {
     save: saveHomeBannersToStorage,
     defaults: DEFAULT_HOME_BANNERS,
     subtitle:
-      "Imagens do carrossel no topo da página inicial do leilão (integradas com API de banners).",
+      "Imagens do carrossel em destaque no topo da página inicial do leilão.",
     imageSavedDesc: "A home do leilão foi atualizada com sucesso.",
   },
   marketplace: {
     load: loadMarketplaceBannersFromStorage,
     save: saveMarketplaceBannersToStorage,
     defaults: DEFAULT_MARKETPLACE_BANNERS,
-    subtitle: "Imagens do carrossel no topo do marketplace público (integradas com API de banners).",
+    subtitle: "Imagens do carrossel em destaque no topo do marketplace público.",
     imageSavedDesc: "O banner do marketplace foi atualizado com sucesso.",
   },
 } as const;
