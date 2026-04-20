@@ -8,12 +8,12 @@ import { Search01Icon } from "@hugeicons/core-free-icons";
 import { AuctionStatus } from "@/data/auction-items";
 import { AuctionCard, type HomeAuctionCardItem } from "./auction-card";
 import { Badge } from "@/components/ui/badge";
-import { Pagination } from "@/components/ui/pagination";
 import { getApiBaseUrl, getApiOrigin } from "@/lib/api/api-url";
 import { listarLeiloesPublicos } from "@/lib/repositories/admin-leiloes-repository";
 import type { LeilaoResponse } from "@/lib/repositories/types/leilao.types";
 import { formatEnumDisplayLabel } from "@/lib/format-enum-label";
 import { tituloCompletoBemLeilao, veiculoLinhaInformacoes } from "@/lib/leilao-bem-exibicao";
+import { cn } from "@/lib/cn";
 
 export type AuctionFilters = {
   tipoVeiculo: string[];
@@ -26,6 +26,7 @@ export type AuctionFilters = {
 
 type HomeItem = HomeAuctionCardItem & {
   leilaoLoteBemId: string;
+  aberturaDisputaIso?: string;
 };
 
 const HOME_AUCTIONS_CACHE_KEY = "nulance-home-auctions-v1";
@@ -51,6 +52,47 @@ function formatDateLabel(iso?: string): string {
   const day = d.toLocaleDateString("pt-BR");
   return `${day} às ${hh}`;
 }
+
+function dateKeyFromIso(iso?: string): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function formatDateSectionLabel(dateKey: string): string {
+  const [y, m, d] = dateKey.split("-").map((part) => Number(part));
+  const date = new Date(y, (m || 1) - 1, d || 1);
+  const label = date.toLocaleDateString("pt-BR", {
+    weekday: "long",
+    day: "2-digit",
+    month: "2-digit",
+  });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+function getTodayDateKey(): string {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function plusDaysDateKey(baseDateKey: string, days: number): string {
+  const [y, m, d] = baseDateKey.split("-").map((part) => Number(part));
+  const date = new Date(y, (m || 1) - 1, d || 1);
+  date.setDate(date.getDate() + days);
+  const ny = date.getFullYear();
+  const nm = String(date.getMonth() + 1).padStart(2, "0");
+  const nd = String(date.getDate()).padStart(2, "0");
+  return `${ny}-${nm}-${nd}`;
+}
+
+type DayFilterKey = "ALL" | "TODAY" | "TOMORROW" | "UPCOMING";
 
 function resolveMediaUrl(raw?: string | null): string | undefined {
   const value = String(raw ?? "").trim();
@@ -92,6 +134,7 @@ function mapLeiloesToHomeItems(rows: LeilaoResponse[]): HomeItem[] {
           cambio: String(bem.cambio ?? "-"),
           combustivel: String(bem.combustivel ?? "-"),
           condicao: String(bem.condicao ?? "-"),
+          aberturaDisputaIso: bem.aberturaDisputa,
           dataAbertura: formatDateLabel(bem.aberturaDisputa),
           dataEncerramento: formatDateLabel(bem.encerramentoDisputa),
           lanceAtual: formatMoney(bem.lanceAtual ?? bem.valorInicial),
@@ -130,6 +173,7 @@ function saveHomeAuctionsToCache(items: HomeItem[]): void {
 export function HomeAuctionGrid({ filters }: { filters?: AuctionFilters }) {
   const [items, setItems] = React.useState<HomeItem[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [dayFilter, setDayFilter] = React.useState<DayFilterKey>("ALL");
 
   React.useEffect(() => {
     let active = true;
@@ -258,18 +302,58 @@ export function HomeAuctionGrid({ filters }: { filters?: AuctionFilters }) {
     });
   }, [filters, items]);
 
-  const itemsPerPage = 9;
-  const [currentPage, setCurrentPage] = React.useState(1);
+  const todayKey = React.useMemo(() => getTodayDateKey(), []);
+  const tomorrowKey = React.useMemo(() => plusDaysDateKey(todayKey, 1), [todayKey]);
 
   React.useEffect(() => {
-    setCurrentPage(1);
+    setDayFilter("ALL");
   }, [filters]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredItems.length / itemsPerPage));
-  const pageItems = filteredItems.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+  const dayFilterCounts = React.useMemo(
+    () => ({
+      ALL: filteredItems.length,
+      TODAY: filteredItems.filter((item) => dateKeyFromIso(item.aberturaDisputaIso) === todayKey).length,
+      TOMORROW: filteredItems.filter((item) => dateKeyFromIso(item.aberturaDisputaIso) === tomorrowKey).length,
+      UPCOMING: filteredItems.filter((item) => {
+        const key = dateKeyFromIso(item.aberturaDisputaIso);
+        return Boolean(key && key > tomorrowKey);
+      }).length,
+    }),
+    [filteredItems, todayKey, tomorrowKey]
   );
+
+  const dayFilteredItems = React.useMemo(() => {
+    return filteredItems.filter((item) => {
+      const key = dateKeyFromIso(item.aberturaDisputaIso);
+      if (!key) return dayFilter === "ALL";
+      if (dayFilter === "TODAY") return key === todayKey;
+      if (dayFilter === "TOMORROW") return key === tomorrowKey;
+      if (dayFilter === "UPCOMING") return key > tomorrowKey;
+      return true;
+    });
+  }, [dayFilter, filteredItems, todayKey, tomorrowKey]);
+
+  const groupedByDay = React.useMemo(() => {
+    const groups = new Map<string, HomeItem[]>();
+    for (const item of dayFilteredItems) {
+      const key = dateKeyFromIso(item.aberturaDisputaIso) ?? "sem-data";
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(item);
+    }
+
+    const entries = Array.from(groups.entries()).sort((a, b) => {
+      if (a[0] === "sem-data") return 1;
+      if (b[0] === "sem-data") return -1;
+      return a[0].localeCompare(b[0]);
+    });
+
+    return entries.map(([key, itemsForDay]) => {
+      if (key === todayKey) return { key, title: "Leilões de Hoje", items: itemsForDay };
+      if (key === tomorrowKey) return { key, title: "Leilões de Amanhã", items: itemsForDay };
+      if (key === "sem-data") return { key, title: "Sem data definida", items: itemsForDay };
+      return { key, title: formatDateSectionLabel(key), items: itemsForDay };
+    });
+  }, [dayFilteredItems, todayKey, tomorrowKey]);
 
   return (
     <section className="w-full bg-white py-10 md:py-12">
@@ -290,27 +374,63 @@ export function HomeAuctionGrid({ filters }: { filters?: AuctionFilters }) {
           </div>
         </div>
         
-        <div className="text-sm font-medium text-zinc-500 mb-6">
-          {filteredItems.length} resultados encontrados
+        <div className="mb-5 flex flex-wrap gap-2">
+          {[
+            { key: "ALL", label: "Todos" },
+            { key: "TODAY", label: "Hoje" },
+            { key: "TOMORROW", label: "Amanhã" },
+            { key: "UPCOMING", label: "Próximos dias" },
+          ].map((option) => (
+            <button
+              key={option.key}
+              type="button"
+              onClick={() => setDayFilter(option.key as DayFilterKey)}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition",
+                dayFilter === option.key
+                  ? "border-nulance-purple bg-nulance-purple text-white"
+                  : "border-zinc-200 bg-white text-zinc-700 hover:border-nulance-purple/40 hover:text-nulance-purple"
+              )}
+            >
+              <span>{option.label}</span>
+              <span
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-xs",
+                  dayFilter === option.key ? "bg-white/20 text-white" : "bg-zinc-100 text-zinc-600"
+                )}
+              >
+                {dayFilterCounts[option.key as DayFilterKey]}
+              </span>
+            </button>
+          ))}
         </div>
-        
+
+        <div className="mb-6 text-sm font-medium text-zinc-500">
+          {dayFilteredItems.length} resultados encontrados
+        </div>
+
         {loading ? (
           <div className="rounded-[28px] border border-zinc-200/20 bg-zinc-50 py-16 text-center text-zinc-500">
             Carregando leilões...
           </div>
-        ) : filteredItems.length > 0 ? (
-          <>
-            <div className="grid grid-cols-1 gap-x-6 gap-y-10 md:grid-cols-2 xl:grid-cols-3">
-              {pageItems.map((item) => (
-              <AuctionCard key={item.id} item={item} />
-              ))}
-            </div>
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          </>
+        ) : groupedByDay.length > 0 ? (
+          <div className="space-y-10">
+            {groupedByDay.map((group) => (
+              <section key={group.key} className="space-y-5">
+                <div className="flex items-center justify-between gap-3 border-b border-zinc-200/70 pb-3">
+                  <h3 className="text-lg font-semibold text-zinc-900 md:text-xl">{group.title}</h3>
+                  <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-600">
+                    {group.items.length} itens
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 gap-x-6 gap-y-10 md:grid-cols-2 xl:grid-cols-3">
+                  {group.items.map((item) => (
+                    <AuctionCard key={item.id} item={item} />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
         ) : (
           <div className="flex flex-col items-center justify-center rounded-[28px] border border-dashed border-zinc-200/10 bg-zinc-50 py-20 text-center">
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
