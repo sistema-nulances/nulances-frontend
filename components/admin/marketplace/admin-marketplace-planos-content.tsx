@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { PlanCard } from "@/components/ui/plan-card";
 import { Button } from "@/components/ui/button";
@@ -49,10 +50,18 @@ function formatMoney(value: number): string {
   }).format(value);
 }
 
+function normalizeTab(value: string | null): "planos" | "faturamento" {
+  return value === "faturamento" ? "faturamento" : "planos";
+}
+
 export function AdminMarketplacePlanosContent() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [drafts, setDrafts] = React.useState<DraftPlan[]>([]);
   const [saving, setSaving] = React.useState(false);
+  const activeTab = normalizeTab(searchParams.get("tab"));
 
   React.useEffect(() => {
     const refresh = () => setDrafts(listarPlanosMarketplace().map(toDraft));
@@ -105,6 +114,16 @@ export function AdminMarketplacePlanosContent() {
     }
   }, [drafts, toast]);
 
+  const handleTabChange = React.useCallback(
+    (tab: string) => {
+      const normalized = normalizeTab(tab);
+      const next = new URLSearchParams(searchParams.toString());
+      next.set("tab", normalized);
+      router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
+
   return (
     <div>
       <PageHeader
@@ -112,17 +131,13 @@ export function AdminMarketplacePlanosContent() {
         subtitle="Defina o valor mensal e o total de anúncios permitidos em cada plano do marketplace."
       />
 
-      <Tabs defaultValue="planos" className="mt-2">
+      <Tabs defaultValue="planos" value={activeTab} onValueChange={handleTabChange} className="mt-2">
         <TabsList className="rounded-2xl border border-zinc-200">
           <TabsTrigger value="planos">Planos</TabsTrigger>
           <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
         </TabsList>
 
         <TabsContent value="planos" className="mt-4 bg-transparent">
-          <div className="mb-5 rounded-2xl bg-white p-4 text-sm text-zinc-600 ring-1 ring-zinc-200">
-            Esta área está mockada por enquanto. As alterações ficam salvas localmente para testes de fluxo.
-          </div>
-
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
             {drafts.map((plan) => (
               <PlanCard

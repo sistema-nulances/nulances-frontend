@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { PlanCard } from "@/components/ui/plan-card";
@@ -36,13 +36,20 @@ const MOCK_FATURAS = [
   { id: "fat-002", referencia: "Mai/2026", valor: 179, status: "Em aberto", vencimento: "2026-05-10" },
 ] as const;
 
+function normalizeTab(value: string | null): "planos" | "faturamento" {
+  return value === "faturamento" ? "faturamento" : "planos";
+}
+
 export function SellerPlanosPageContent() {
   const { user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [planos, setPlanos] = React.useState<MarketplacePlano[]>([]);
   const [assinatura, setAssinatura] = React.useState<MarketplacePlanoAssinatura | null>(null);
   const [loadingPlanoId, setLoadingPlanoId] = React.useState<string | null>(null);
+  const activeTab = normalizeTab(searchParams.get("tab"));
 
   React.useEffect(() => {
     const refresh = () => {
@@ -86,6 +93,16 @@ export function SellerPlanosPageContent() {
     [router, toast, user?.id]
   );
 
+  const handleTabChange = React.useCallback(
+    (tab: string) => {
+      const normalized = normalizeTab(tab);
+      const next = new URLSearchParams(searchParams.toString());
+      next.set("tab", normalized);
+      router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
+
   return (
     <div>
       <PageHeader
@@ -93,7 +110,7 @@ export function SellerPlanosPageContent() {
         subtitle="Escolha um plano para liberar a publicação de anúncios no marketplace."
       />
 
-      <Tabs defaultValue="planos" className="mt-2">
+      <Tabs defaultValue="planos" value={activeTab} onValueChange={handleTabChange} className="mt-2">
         <TabsList className="rounded-2xl border border-zinc-200">
           <TabsTrigger value="planos">Planos</TabsTrigger>
           <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
