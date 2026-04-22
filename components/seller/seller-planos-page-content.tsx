@@ -3,186 +3,270 @@
 import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { useAuth } from "@/components/providers/auth-provider";
+import { Button } from "@/components/ui/button";
 import { PlanCard } from "@/components/ui/plan-card";
 import { PageHeader } from "@/components/ui/page-header";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  MARKETPLACE_PLANOS_UPDATED_EVENT,
-  carregarAssinaturaPlanoMarketplace,
-  listarPlanosMarketplace,
-  salvarAssinaturaPlanoMarketplace,
-  type MarketplacePlano,
-  type MarketplacePlanoAssinatura,
-} from "@/lib/marketplace-planos";
+import { getApiErrorMessage } from "@/lib/api/error-body";
+import { assinarPlanoVendedor, buscarPainelPlanosVendedor } from "@/lib/repositories/vendedor-planos-repository";
+import { ApiError } from "@/lib/repositories/types/auth.types";
+import type {
+  AssinaturaPlanoStatusApi,
+  VendedorPlanosResponse,
+} from "@/lib/repositories/types/marketplace-planos.types";
 
-function assinaturaLabel(assinatura: MarketplacePlanoAssinatura | null, planoId: string): string {
-  if (!assinatura || assinatura.planoId !== planoId) return "";
-  const when = new Date(assinatura.assinadoEm).toLocaleDateString("pt-BR");
-  return `Assinado em ${when}`;
+function parseApiError(error: unknown, fallback: string): string {
+  if (error instanceof ApiError) return getApiErrorMessage(error.body) ?? error.message;
+  if (error instanceof Error) return error.message;
+  return fallback;
 }
 
-function formatMoney(value: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 2,
-  }).format(value);
+function formatDateTime(iso: string | undefined | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("pt-BR");
 }
 
-const MOCK_FATURAS = [
-  { id: "fat-001", referencia: "Abr/2026", valor: 179, status: "Pago", vencimento: "2026-04-10" },
-  { id: "fat-002", referencia: "Mai/2026", valor: 179, status: "Em aberto", vencimento: "2026-05-10" },
-] as const;
+function planoNomeLabel(nome: string): string {
+  const code = String(nome ?? "").trim().toUpperCase();
+  if (code === "BASICO") return "Básico";
+  if (code === "PRO") return "Pro";
+  if (code === "PREMIUM") return "Premium";
+  return nome;
+}
 
-function normalizeTab(value: string | null): "planos" | "faturamento" {
-  return value === "faturamento" ? "faturamento" : "planos";
+function statusAssinaturaLabel(status: AssinaturaPlanoStatusApi | undefined): string {
+  const code = String(status ?? "").toUpperCase();
+  if (code === "PENDENTE_PAGAMENTO") return "Pendente de pagamento";
+  if (code === "ATIVA") return "Ativa";
+  if (code === "INADIMPLENTE") return "Inadimplente";
+  if (code === "CANCELADA") return "Cancelada";
+  return status ? String(status) : "—";
+}
+
+function normalizeCheckoutResult(params: URLSearchParams): "success" | "pending" | "failure" | null {
+  const candidates = [
+    params.get("status"),
+    params.get("collection_status"),
+    params.get("paymentStatus"),
+    params.get("resultado"),
+  ]
+    .map((v) => String(v ?? "").trim().toLowerCase())
+    .filter(Boolean);
+  for (const item of candidates) {
+    if (item === "success" || item === "approved" || item === "pago") return "success";
+    if (item === "pending" || item === "in_process") return "pending";
+    if (item === "failure" || item === "rejected" || item === "cancelled") return "failure";
+  }
+  return null;
 }
 
 export function SellerPlanosPageContent() {
-  const { user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [planos, setPlanos] = React.useState<MarketplacePlano[]>([]);
-  const [assinatura, setAssinatura] = React.useState<MarketplacePlanoAssinatura | null>(null);
+  const [painel, setPainel] = React.useState<VendedorPlanosResponse | null>(null);
+  const [loading, setLoading] = React.useState(true);
   const [loadingPlanoId, setLoadingPlanoId] = React.useState<string | null>(null);
-  const activeTab = normalizeTab(searchParams.get("tab"));
+  const [polling, setPolling] = React.useState(false);
+  const checkoutResult = normalizeCheckoutResult(searchParams);
+  const handledCheckoutRef = React.useRef<string | null>(null);
 
   React.useEffect(() => {
-    const refresh = () => {
-      setPlanos(listarPlanosMarketplace());
-      const uid = user?.id?.trim();
-      setAssinatura(uid ? carregarAssinaturaPlanoMarketplace(uid) : null);
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const data = await buscarPainelPlanosVendedor();
+        if (cancelled) return;
+        setPainel(data);
+      } catch (error) {
+        if (cancelled) return;
+        toast({
+          type: "error",
+          title: "Falha ao carregar planos",
+          description: parseApiError(error, "Não foi possível carregar seus planos."),
+        });
+        setPainel({ planosDisponiveis: [], assinaturaAtual: null });
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
     };
-    refresh();
-    window.addEventListener(MARKETPLACE_PLANOS_UPDATED_EVENT, refresh);
-    return () => window.removeEventListener(MARKETPLACE_PLANOS_UPDATED_EVENT, refresh);
-  }, [user?.id]);
+  }, [toast]);
+
+  React.useEffect(() => {
+    const key = searchParams.toString();
+    if (!checkoutResult) return;
+    if (handledCheckoutRef.current === key) return;
+    handledCheckoutRef.current = key;
+
+    if (checkoutResult === "failure") {
+      toast({
+        type: "warning",
+        title: "Pagamento não concluído",
+        description: "Você pode tentar novamente escolhendo um plano.",
+      });
+      router.replace(pathname, { scroll: false });
+      return;
+    }
+
+    setPolling(true);
+    toast({
+      type: "info",
+      title: checkoutResult === "success" ? "Pagamento recebido" : "Pagamento em análise",
+      description: "Estamos atualizando o status da assinatura.",
+    });
+
+    let cancelled = false;
+    let attempts = 0;
+    const maxAttempts = 12;
+    const timer = window.setInterval(() => {
+      attempts += 1;
+      void (async () => {
+        try {
+          const next = await buscarPainelPlanosVendedor();
+          if (cancelled) return;
+          setPainel(next);
+          const status = String(next.assinaturaAtual?.status ?? "").toUpperCase();
+          if (status === "ATIVA") {
+            window.clearInterval(timer);
+            setPolling(false);
+            toast({
+              type: "success",
+              title: "Assinatura ativada",
+              description: "Seu plano está ativo para publicar anúncios.",
+            });
+            router.replace(pathname, { scroll: false });
+            return;
+          }
+          if (attempts >= maxAttempts) {
+            window.clearInterval(timer);
+            setPolling(false);
+            router.replace(pathname, { scroll: false });
+          }
+        } catch {
+          if (attempts >= maxAttempts) {
+            window.clearInterval(timer);
+            setPolling(false);
+            router.replace(pathname, { scroll: false });
+          }
+        }
+      })();
+    }, 5000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      setPolling(false);
+    };
+  }, [checkoutResult, pathname, router, searchParams, toast]);
 
   const handleAssinar = React.useCallback(
-    async (planoId: MarketplacePlano["id"]) => {
-      const uid = user?.id?.trim();
-      if (!uid) {
-        toast({
-          type: "warning",
-          title: "Sessão inválida",
-          description: "Faça login novamente para assinar um plano.",
-        });
-        return;
-      }
+    async (planoId: string) => {
       setLoadingPlanoId(planoId);
       try {
-        salvarAssinaturaPlanoMarketplace(uid, {
-          planoId,
-          assinadoEm: new Date().toISOString(),
-        });
-        setAssinatura({ planoId, assinadoEm: new Date().toISOString() });
+        const result = await assinarPlanoVendedor({ planoId });
+        if (!result.checkoutUrl) {
+          throw new Error("Checkout indisponível no momento.");
+        }
+        window.location.assign(result.checkoutUrl);
+      } catch (error) {
         toast({
-          type: "success",
-          title: "Plano assinado",
-          description: "Você já pode publicar anúncios no painel do vendedor.",
+          type: "error",
+          title: "Falha ao iniciar pagamento",
+          description: parseApiError(error, "Não foi possível gerar o checkout."),
         });
-        router.push("/painel-vendedor/meus-anuncios");
       } finally {
         setLoadingPlanoId(null);
       }
     },
-    [router, toast, user?.id]
+    [toast]
   );
 
-  const handleTabChange = React.useCallback(
-    (tab: string) => {
-      const normalized = normalizeTab(tab);
-      const next = new URLSearchParams(searchParams.toString());
-      next.set("tab", normalized);
-      router.replace(`${pathname}?${next.toString()}`, { scroll: false });
-    },
-    [pathname, router, searchParams]
-  );
+  const assinaturaAtual = painel?.assinaturaAtual ?? null;
+  const planos = painel?.planosDisponiveis ?? [];
+  const assinaturaAtiva = String(assinaturaAtual?.status ?? "").toUpperCase() === "ATIVA";
 
   return (
     <div>
       <PageHeader
         title="Planos de anúncios"
-        subtitle="Escolha um plano para liberar a publicação de anúncios no marketplace."
+        subtitle="Gerencie sua assinatura para publicar anúncios no marketplace."
       />
 
-      <Tabs defaultValue="planos" value={activeTab} onValueChange={handleTabChange} className="mt-2">
-        <TabsList className="rounded-2xl border border-zinc-200">
-          <TabsTrigger value="planos">Planos</TabsTrigger>
-          <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
-        </TabsList>
+      <section className="mt-2 rounded-3xl bg-white p-6 ring-1 ring-zinc-200">
+        {loading ? (
+          <p className="text-sm text-zinc-500">Carregando dados da assinatura...</p>
+        ) : assinaturaAtual ? (
+          <div className="space-y-2">
+            <p className="text-sm text-zinc-700">
+              Status atual: <strong>{statusAssinaturaLabel(assinaturaAtual.status)}</strong>
+            </p>
+            <p className="text-sm text-zinc-700">
+              Plano: <strong>{planoNomeLabel(assinaturaAtual.plano.nome)}</strong>
+            </p>
+            <p className="text-sm text-zinc-700">
+              Anúncios disponíveis: <strong>{assinaturaAtual.anunciosDisponiveis}</strong>
+            </p>
+            <p className="text-sm text-zinc-600">
+              Início: {formatDateTime(assinaturaAtual.inicioVigencia)} · Próxima cobrança:{" "}
+              {formatDateTime(assinaturaAtual.proximaCobranca)}
+            </p>
 
-        <TabsContent value="planos" className="mt-4 space-y-5 bg-transparent">
-          <div className="rounded-2xl bg-white p-4 text-sm text-zinc-600 ring-1 ring-zinc-200">
-            Seu perfil vendedor precisa de um plano ativo para criar anúncios.
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-            {planos.map((plano) => {
-              const isActive = assinatura?.planoId === plano.id;
-              return (
-                <PlanCard
-                  key={plano.id}
-                  plano={plano}
-                  active={isActive}
-                  actionLabel={isActive ? "Plano atual" : "Assinar plano"}
-                  actionDisabled={isActive}
-                  actionLoading={loadingPlanoId === plano.id}
-                  onAction={() => void handleAssinar(plano.id)}
-                  footer={
-                    isActive ? (
-                      <p className="text-xs font-medium text-[var(--nulance-purple)]">
-                        {assinaturaLabel(assinatura, plano.id)}
-                      </p>
-                    ) : null
-                  }
-                />
-              );
-            })}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="faturamento" className="mt-4 bg-transparent">
-          <section className="rounded-3xl bg-white p-6 ring-1 ring-zinc-200">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 pb-4">
-              <div>
-                <p className="text-lg font-semibold text-zinc-900">Resumo de cobrança</p>
-                <p className="text-sm text-zinc-500">Informações mockadas para validação da jornada.</p>
-              </div>
-              <p className="text-sm font-medium text-zinc-700">
-                Plano atual:{" "}
-                <span className="text-[var(--nulance-purple)]">
-                  {assinatura ? (planos.find((p) => p.id === assinatura.planoId)?.nome ?? "—") : "Sem plano"}
-                </span>
-              </p>
-            </div>
-
-            <ul className="mt-4 space-y-3">
-              {MOCK_FATURAS.map((fatura) => (
-                <li
-                  key={fatura.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-zinc-50/70 px-4 py-3"
+            {String(assinaturaAtual.status).toUpperCase() === "PENDENTE_PAGAMENTO" ? (
+              <div className="pt-2">
+                <Button
+                  type="button"
+                  className="rounded-full"
+                  onClick={() => void handleAssinar(assinaturaAtual.plano.id)}
+                  loading={loadingPlanoId === assinaturaAtual.plano.id}
+                  disabled={polling}
                 >
-                  <div>
-                    <p className="text-sm font-semibold text-zinc-900">{fatura.referencia}</p>
-                    <p className="text-xs text-zinc-500">
-                      Vencimento: {new Date(fatura.vencimento).toLocaleDateString("pt-BR")}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-zinc-900">{formatMoney(fatura.valor)}</p>
-                    <p className="text-xs text-zinc-500">{fatura.status}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-        </TabsContent>
-      </Tabs>
+                  Pagar agora
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <p className="text-sm text-zinc-700">
+            Você ainda não possui assinatura ativa. Escolha um plano abaixo para começar.
+          </p>
+        )}
+      </section>
+
+      <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-3">
+        {planos.map((plano) => {
+          const isCurrent = assinaturaAtual?.plano?.id === plano.id;
+          return (
+            <PlanCard
+              key={plano.id}
+              plano={{
+                id: plano.id,
+                nome: planoNomeLabel(plano.nome),
+                descricao: plano.descricao,
+                precoMensal: plano.valorMensal,
+                limiteAnuncios: plano.totalAnuncios,
+                destaque: planoNomeLabel(plano.nome) === "Pro",
+              }}
+              active={isCurrent && assinaturaAtiva}
+              actionLabel={isCurrent && assinaturaAtiva ? "Plano atual" : "Assinar plano"}
+              actionDisabled={!plano.ativo || (isCurrent && assinaturaAtiva) || polling}
+              actionLoading={loadingPlanoId === plano.id}
+              onAction={() => void handleAssinar(plano.id)}
+              footer={
+                !plano.ativo ? (
+                  <p className="text-xs text-zinc-500">Plano indisponível no momento.</p>
+                ) : null
+              }
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }

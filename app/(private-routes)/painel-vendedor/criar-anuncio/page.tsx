@@ -17,7 +17,7 @@ import {
   criarAnuncioVendedor,
   gerarUploadMidiaAnuncio,
 } from "@/lib/repositories/seller-anuncios-repository";
-import { carregarAssinaturaPlanoMarketplace } from "@/lib/marketplace-planos";
+import { buscarPainelPlanosVendedor } from "@/lib/repositories/vendedor-planos-repository";
 import { ApiError } from "@/lib/repositories/types/auth.types";
 import type {
   AnuncioDetalheTecnicoRequest,
@@ -137,19 +137,31 @@ export default function SellerCriarAnuncioPage() {
 
   React.useEffect(() => {
     if (status !== "ready") return;
-    const uid = user?.id?.trim();
-    if (!uid) return;
-    const assinatura = carregarAssinaturaPlanoMarketplace(uid);
-    if (assinatura) return;
-    if (!warnedNoPlanRef.current) {
-      warnedNoPlanRef.current = true;
-      toast({
-        type: "warning",
-        title: "Plano necessário",
-        description: "Escolha um plano antes de criar anúncios.",
-      });
-    }
-    router.replace("/painel-vendedor/planos");
+    if (!user?.id?.trim()) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const painel = await buscarPainelPlanosVendedor();
+        if (cancelled) return;
+        const statusAssinatura = String(painel.assinaturaAtual?.status ?? "").toUpperCase();
+        const disponiveis = Number(painel.assinaturaAtual?.anunciosDisponiveis ?? 0);
+        if (statusAssinatura === "ATIVA" && disponiveis > 0) return;
+      } catch {
+        if (cancelled) return;
+      }
+      if (!warnedNoPlanRef.current) {
+        warnedNoPlanRef.current = true;
+        toast({
+          type: "warning",
+          title: "Plano necessário",
+          description: "Escolha um plano antes de criar anúncios.",
+        });
+      }
+      router.replace("/painel-vendedor/planos");
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [router, status, toast, user?.id]);
 
   const canSubmit = React.useMemo(

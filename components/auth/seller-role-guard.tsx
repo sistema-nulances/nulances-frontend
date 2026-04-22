@@ -17,12 +17,19 @@ export function SellerRoleGuard({ children }: { children: React.ReactNode }) {
       router.replace(`/401?returnUrl=${encodeURIComponent(pathname || "/painel-vendedor")}`);
       return;
     }
-    if (user.role !== "VENDEDOR") {
+    const role = String(user.role ?? "").toUpperCase();
+    const isPlanosRoute = String(pathname ?? "").startsWith("/painel-vendedor/planos");
+    const allow = role === "VENDEDOR" || (isPlanosRoute && role === "COMPRADOR");
+    if (!allow) {
       router.replace("/403");
     }
   }, [user, status, router, pathname]);
 
-  if (status !== "ready" || !user || user.role !== "VENDEDOR") {
+  const role = String(user?.role ?? "").toUpperCase();
+  const isPlanosRoute = String(pathname ?? "").startsWith("/painel-vendedor/planos");
+  const allow = role === "VENDEDOR" || (isPlanosRoute && role === "COMPRADOR");
+
+  if (status !== "ready" || !user || !allow) {
     return <SellerContentSkeleton />;
   }
 

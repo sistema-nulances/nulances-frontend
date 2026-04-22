@@ -4,11 +4,19 @@ import * as React from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { MarketplacePlano } from "@/lib/marketplace-planos";
 import { cn } from "@/lib/cn";
 
+type PlanCardData = {
+  id: string;
+  nome: string;
+  descricao: string;
+  precoMensal: number;
+  limiteAnuncios: number;
+  destaque?: boolean;
+};
+
 type PlanCardProps = {
-  plano: MarketplacePlano;
+  plano: PlanCardData;
   active?: boolean;
   className?: string;
   footer?: React.ReactNode;
