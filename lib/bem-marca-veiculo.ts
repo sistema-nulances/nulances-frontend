@@ -31,6 +31,7 @@ const ENTRIES: Array<{ code: string; label: string }> = [
   { code: "MASERATI", label: "Maserati" },
   { code: "MAZDA", label: "Mazda" },
   { code: "MCLAREN", label: "McLaren" },
+  { code: "MERCEDES", label: "Mercedes" },
   { code: "MG", label: "MG" },
   { code: "MINI", label: "Mini" },
   { code: "MITSUBISHI", label: "Mitsubishi" },
