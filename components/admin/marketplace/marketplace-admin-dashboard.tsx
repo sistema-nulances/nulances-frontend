@@ -4,32 +4,68 @@ import * as React from "react";
 import { AuctionIcon, Clock01Icon, SaleTag02Icon, ShoppingBag01Icon } from "@hugeicons/core-free-icons";
 
 import { AdminDashboardTextLink } from "@/components/admin/dashboard/auction-dashboard-rows";
-import {
-  ActivityFeedRow,
-  ModerationQueueRow,
-} from "@/components/admin/marketplace/marketplace-dashboard-rows";
+import { ModerationQueueRow } from "@/components/admin/marketplace/marketplace-dashboard-rows";
 import { AdminDashboardPanel } from "@/components/admin/dashboard/admin-dashboard-panel";
 import { AdminMetricTile } from "@/components/admin/dashboard/admin-metric-tile";
 import { PageHeader } from "@/components/ui/page-header";
 import { useToast } from "@/components/ui/use-toast";
-import { MARKETPLACE_ANUNCIOS_MODERACAO_QUERY, marketplaceAdminRecentActivity } from "@/data/marketplace-admin-mock";
-import { marketplaceItems } from "@/data/marketplace-items";
-import { computeMarketplaceDashboardCounts } from "@/lib/admin-marketplace-dashboard";
-import { listarFilaModeracaoDashboard } from "@/lib/repositories/admin-anuncios-repository";
-import type { AnuncioModerarListResponse } from "@/lib/repositories/types/admin-anuncios.types";
+import { MARKETPLACE_ANUNCIOS_MODERACAO_QUERY } from "@/data/marketplace-admin-mock";
+import {
+  buscarDashboardStatsMarketplace,
+  listarFilaModeracaoDashboard,
+} from "@/lib/repositories/admin-anuncios-repository";
+import type {
+  AnuncioModerarListResponse,
+  DashboardStatsMarketplaceResponse,
+} from "@/lib/repositories/types/admin-anuncios.types";
 import { ApiError } from "@/lib/repositories/types/auth.types";
 
 const MODERACAO_LIMITE_PREVIEW = 4;
-const ATIVIDADE_LIMITE_PREVIEW = 6;
+
+const EMPTY_STATS: DashboardStatsMarketplaceResponse = {
+  totalAnuncios: 0,
+  totalPublicados: 0,
+  totalPendentes: 0,
+  totalSuspensos: 0,
+};
 
 export function MarketplaceAdminDashboard() {
   const { toast } = useToast();
-  const stats = React.useMemo(() => computeMarketplaceDashboardCounts(marketplaceItems), []);
+  const [stats, setStats] = React.useState<DashboardStatsMarketplaceResponse>(EMPTY_STATS);
 
   const [filaPreview, setFilaPreview] = React.useState<AnuncioModerarListResponse[]>([]);
   const [filaTotal, setFilaTotal] = React.useState(0);
   const [filaLoading, setFilaLoading] = React.useState(true);
   const [filaError, setFilaError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await buscarDashboardStatsMarketplace();
+        if (cancelled) return;
+        setStats({
+          totalAnuncios: response.totalAnuncios ?? 0,
+          totalPublicados: response.totalPublicados ?? 0,
+          totalPendentes: response.totalPendentes ?? 0,
+          totalSuspensos: response.totalSuspensos ?? 0,
+        });
+      } catch (err) {
+        if (cancelled) return;
+        setStats(EMPTY_STATS);
+        const msg =
+          err instanceof ApiError
+            ? err.message
+            : err instanceof Error
+              ? err.message
+              : "Não foi possível carregar as estatísticas.";
+        toast({ type: "error", title: "Estatísticas do dashboard", description: msg });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [toast]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -60,11 +96,6 @@ export function MarketplaceAdminDashboard() {
     };
   }, [toast]);
 
-  const atividadePreview = React.useMemo(
-    () => marketplaceAdminRecentActivity.slice(0, ATIVIDADE_LIMITE_PREVIEW),
-    []
-  );
-
   const anunciosModeracaoHref = `/admin/marketplace/anuncios?${MARKETPLACE_ANUNCIOS_MODERACAO_QUERY}`;
 
   return (
@@ -75,13 +106,18 @@ export function MarketplaceAdminDashboard() {
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <AdminMetricTile label="Anúncios no catálogo" value={stats.total} icon={ShoppingBag01Icon} accent="purple" />
-        <AdminMetricTile label="Publicados" value={stats.aberto} icon={SaleTag02Icon} accent="emerald" />
-        <AdminMetricTile label="Em breve" value={stats.emBreve} icon={Clock01Icon} accent="amber" />
-        <AdminMetricTile label="Encerrados" value={stats.encerrado} icon={AuctionIcon} accent="zinc" />
+        <AdminMetricTile
+          label="Anúncios no catálogo"
+          value={stats.totalAnuncios}
+          icon={ShoppingBag01Icon}
+          accent="purple"
+        />
+        <AdminMetricTile label="Publicados" value={stats.totalPublicados} icon={SaleTag02Icon} accent="emerald" />
+        <AdminMetricTile label="Pendentes" value={stats.totalPendentes} icon={Clock01Icon} accent="amber" />
+        <AdminMetricTile label="Suspensos" value={stats.totalSuspensos} icon={AuctionIcon} accent="zinc" />
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+      <div className="mt-8 grid grid-cols-1 gap-8">
         <AdminDashboardPanel
           title="Fila de moderação"
           subtitle={
@@ -106,20 +142,6 @@ export function MarketplaceAdminDashboard() {
               ))}
             </div>
           )}
-        </AdminDashboardPanel>
-
-        <AdminDashboardPanel
-          title="Últimas movimentações"
-          subtitle="Novos anúncios, edições relevantes e encerramentos recentes."
-          headerAction={
-            <AdminDashboardTextLink href="/admin/marketplace/anuncios">Ver anúncios →</AdminDashboardTextLink>
-          }
-        >
-          <div>
-            {atividadePreview.map((ev) => (
-              <ActivityFeedRow key={ev.id} event={ev} />
-            ))}
-          </div>
         </AdminDashboardPanel>
       </div>
     </>

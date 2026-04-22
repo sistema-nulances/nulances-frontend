@@ -3,6 +3,7 @@ import type {
   AnuncioAdminListResponse,
   AnuncioModerarListResponse,
   AnuncioStatusResponse,
+  DashboardStatsMarketplaceResponse,
   ListarAdminAnunciosRequest,
   SpringPage,
   SuspenderAnuncioRequest,
@@ -38,6 +39,12 @@ export async function listarFilaModeracaoDashboard(params?: {
     `/admin/anuncios/moderar/dashboard?${qs.toString()}`,
     { method: "GET" }
   );
+}
+
+export async function buscarDashboardStatsMarketplace(): Promise<DashboardStatsMarketplaceResponse> {
+  return apiFetch<DashboardStatsMarketplaceResponse>("/admin/anuncios/dashboard/stats-marketplace", {
+    method: "GET",
+  });
 }
 
 export async function buscarAdminAnuncioPorId(id: string): Promise<AnuncioResponse> {

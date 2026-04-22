@@ -46,6 +46,14 @@ export type AnuncioStatusResponse = {
   mensagem?: string;
 };
 
+/** `GET /admin/anuncios/dashboard/stats-marketplace` */
+export type DashboardStatsMarketplaceResponse = {
+  totalAnuncios: number;
+  totalPublicados: number;
+  totalPendentes: number;
+  totalSuspensos: number;
+};
+
 /** `GET /admin/anuncios/moderar/dashboard` — fila de moderação (preview). */
 export type AnuncioModerarListResponse = {
   id: string;
