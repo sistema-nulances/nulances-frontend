@@ -46,6 +46,15 @@ export type AnuncioStatusResponse = {
   mensagem?: string;
 };
 
+/** `GET /admin/anuncios/moderar/dashboard` — fila de moderação (preview). */
+export type AnuncioModerarListResponse = {
+  id: string;
+  modelo: string;
+  nomeVendedor: string;
+  enviadoEm: string;
+  tipoVeiculo?: string | null;
+};
+
 export type SpringPage<T> = {
   content: T[];
   totalElements: number;

@@ -4,17 +4,16 @@ import type { ComponentProps } from "react";
 
 import { VendedorAdminLink } from "@/components/admin/marketplace/vendedor-admin-link";
 import { Badge } from "@/components/ui/badge";
-import type { MarketplaceModerationPending, MarketplaceActivityEvent } from "@/data/marketplace-admin-mock";
+import type { MarketplaceActivityEvent } from "@/data/marketplace-admin-mock";
+import { labelTipoVeiculoApi } from "@/data/bem-veiculo-api";
 import { formatDashboardDateTime } from "@/lib/format-dashboard-datetime";
+import type { AnuncioModerarListResponse } from "@/lib/repositories/types/admin-anuncios.types";
 import { cn } from "@/lib/cn";
 
-const categoriaLabel: Record<MarketplaceModerationPending["categoria"], string> = {
-  carros: "Carros",
-  motos: "Motos",
-  caminhoes: "Caminhões",
-};
+export function ModerationQueueRow({ item }: { item: AnuncioModerarListResponse }) {
+  const enviadoEm = item.enviadoEm ?? "";
+  const tipoLabel = labelTipoVeiculoApi(item.tipoVeiculo) || String(item.tipoVeiculo ?? "").trim() || "—";
 
-export function ModerationQueueRow({ item }: { item: MarketplaceModerationPending }) {
   return (
     <div
       className={cn(
@@ -23,20 +22,20 @@ export function ModerationQueueRow({ item }: { item: MarketplaceModerationPendin
       )}
     >
       <div className="min-w-0 flex-1">
-        <p className="text-[14px] font-semibold text-zinc-900">{item.titulo}</p>
+        <p className="text-[14px] font-semibold text-zinc-900">{item.modelo}</p>
         <p className="mt-1 text-[12px] text-zinc-500">
-          <VendedorAdminLink name={item.vendedor} className="text-[12px]" /> · #{item.id}
+          <VendedorAdminLink name={item.nomeVendedor} className="text-[12px]" /> · #{item.id}
         </p>
         <p className="mt-1 text-[12px] text-zinc-600">
           Enviado em{" "}
-          <time dateTime={item.enviadoEm} className="font-medium text-zinc-800">
-            {formatDashboardDateTime(item.enviadoEm)}
+          <time dateTime={enviadoEm} className="font-medium text-zinc-800">
+            {enviadoEm ? formatDashboardDateTime(enviadoEm) : "—"}
           </time>
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <Badge variant="amber" size="sm" className="normal-case">
-          {categoriaLabel[item.categoria]}
+          {tipoLabel}
         </Badge>
       </div>
     </div>

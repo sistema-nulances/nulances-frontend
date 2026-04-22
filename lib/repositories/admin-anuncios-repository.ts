@@ -1,6 +1,7 @@
 import { apiFetch } from "@/lib/api/api-fetch";
 import type {
   AnuncioAdminListResponse,
+  AnuncioModerarListResponse,
   AnuncioStatusResponse,
   ListarAdminAnunciosRequest,
   SpringPage,
@@ -24,6 +25,19 @@ export async function listarAdminAnuncios(
   return apiFetch<SpringPage<AnuncioAdminListResponse>>(`/admin/anuncios?${qs.toString()}`, {
     method: "GET",
   });
+}
+
+export async function listarFilaModeracaoDashboard(params?: {
+  page?: number;
+  size?: number;
+}): Promise<SpringPage<AnuncioModerarListResponse>> {
+  const qs = new URLSearchParams();
+  qs.set("page", String(params?.page ?? 0));
+  qs.set("size", String(params?.size ?? 10));
+  return apiFetch<SpringPage<AnuncioModerarListResponse>>(
+    `/admin/anuncios/moderar/dashboard?${qs.toString()}`,
+    { method: "GET" }
+  );
 }
 
 export async function buscarAdminAnuncioPorId(id: string): Promise<AnuncioResponse> {
