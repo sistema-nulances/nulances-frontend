@@ -63,6 +63,7 @@ export function AdminMainNav({
       label: "Vendedores",
       icon: UserMultipleIcon,
     },
+    { href: "/admin/marketplace/planos", label: "Planos", icon: PackageIcon },
     { href: "/admin/marketplace/banners", label: "Banners", icon: Megaphone01Icon },
     { href: "/admin/marketplace/usuarios", label: "Gestão de usuários", icon: UserMultipleIcon },
   ];

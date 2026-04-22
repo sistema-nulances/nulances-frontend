@@ -6,6 +6,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   AuctionIcon,
   Home09Icon,
+  PackageIcon,
   ShoppingBag01Icon,
   UserMultipleIcon,
 } from "@hugeicons/core-free-icons";
@@ -31,8 +32,8 @@ const MARKETPLACE_ITEMS: Item[] = [
   { href: "/admin/marketplace/dashboard", label: "Dashboard", icon: Home09Icon, match: (p) => p === "/admin/marketplace/dashboard" || p === "/admin/marketplace" },
   { href: "/admin/marketplace/anuncios", label: "Anúncios", icon: ShoppingBag01Icon, match: (p) => p.startsWith("/admin/marketplace/anuncios") },
   { href: "/admin/marketplace/vendedores", label: "Vendedores", icon: UserMultipleIcon, match: (p) => p.startsWith("/admin/marketplace/vendedores") },
-  { href: "/admin/marketplace/usuarios", label: "Gestão de usuários", icon: UserMultipleIcon, match: (p) => p.startsWith("/admin/marketplace/usuarios") || p.startsWith("/admin/marketplace/avisos") || p.startsWith("/admin/marketplace/banners") },
-  { href: "/admin/marketplace/dashboard", label: "Leilão", icon: AuctionIcon, match: () => false },
+  { href: "/admin/marketplace/planos", label: "Planos", icon: PackageIcon, match: (p) => p.startsWith("/admin/marketplace/planos") || p.startsWith("/admin/marketplace/banners") },
+  { href: "/admin/marketplace/usuarios", label: "Usuários", icon: AuctionIcon, match: (p) => p.startsWith("/admin/marketplace/usuarios") || p.startsWith("/admin/marketplace/avisos") },
 ];
 
 export function AdminMobileBottomNav() {

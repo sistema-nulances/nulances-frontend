@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowLeft01Icon, ShoppingBag01Icon } from "@hugeicons/core-free-icons";
+import { ArrowLeft01Icon, PackageIcon, ShoppingBag01Icon } from "@hugeicons/core-free-icons";
 
 import { cn } from "@/lib/cn";
 
@@ -13,6 +13,12 @@ const items = [
     label: "Meus anúncios",
     icon: ShoppingBag01Icon,
     match: (p: string) => p === "/painel-vendedor" || p.startsWith("/painel-vendedor/meus-anuncios"),
+  },
+  {
+    href: "/painel-vendedor/planos",
+    label: "Planos",
+    icon: PackageIcon,
+    match: (p: string) => p.startsWith("/painel-vendedor/planos"),
   },
   {
     href: "/marketplace",

@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 
+import { useAuth } from "@/components/providers/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +17,7 @@ import {
   criarAnuncioVendedor,
   gerarUploadMidiaAnuncio,
 } from "@/lib/repositories/seller-anuncios-repository";
+import { carregarAssinaturaPlanoMarketplace } from "@/lib/marketplace-planos";
 import { ApiError } from "@/lib/repositories/types/auth.types";
 import type {
   AnuncioDetalheTecnicoRequest,
@@ -111,6 +113,8 @@ const EMPTY_DETALHE_TECNICO: AnuncioDetalheTecnicoRequest = {
 export default function SellerCriarAnuncioPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { user, status } = useAuth();
+  const warnedNoPlanRef = React.useRef(false);
 
   const [marca, setMarca] = React.useState("");
   const [modelo, setModelo] = React.useState("");
@@ -130,6 +134,23 @@ export default function SellerCriarAnuncioPage() {
   const [midiaFiles, setMidiaFiles] = React.useState<File[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [uploadStatus, setUploadStatus] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (status !== "ready") return;
+    const uid = user?.id?.trim();
+    if (!uid) return;
+    const assinatura = carregarAssinaturaPlanoMarketplace(uid);
+    if (assinatura) return;
+    if (!warnedNoPlanRef.current) {
+      warnedNoPlanRef.current = true;
+      toast({
+        type: "warning",
+        title: "Plano necessário",
+        description: "Escolha um plano antes de criar anúncios.",
+      });
+    }
+    router.replace("/painel-vendedor/planos");
+  }, [router, status, toast, user?.id]);
 
   const canSubmit = React.useMemo(
     () =>

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { ArrowLeft01Icon, ShoppingBag01Icon } from "@hugeicons/core-free-icons";
+import { ArrowLeft01Icon, PackageIcon, ShoppingBag01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 
@@ -17,6 +17,7 @@ type SellerNavItem = {
 
 const SELLER_ITEMS: SellerNavItem[] = [
   { href: "/painel-vendedor/meus-anuncios", label: "Meus Anúncios", icon: ShoppingBag01Icon },
+  { href: "/painel-vendedor/planos", label: "Planos", icon: PackageIcon },
 ];
 
 export function SellerSidebar() {
