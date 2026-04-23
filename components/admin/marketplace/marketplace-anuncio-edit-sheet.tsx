@@ -97,7 +97,10 @@ type Props = {
   open: boolean;
   anuncio: MarketplaceAnuncioAdmin | null;
   onClose: () => void;
-  onSave: (next: MarketplaceAnuncioAdmin) => void | Promise<boolean | void>;
+  onSave: (
+    next: MarketplaceAnuncioAdmin,
+    meta: { novasMidias: Array<{ file: File; kind: "image" | "video" }> }
+  ) => void | Promise<boolean | void>;
 };
 
 export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: Props) {
@@ -181,6 +184,7 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
         id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
         url: URL.createObjectURL(f),
         kind,
+        file: f,
       });
     }
     if (next.length) setMidiaDraft((p) => [...p, ...next]);
@@ -238,7 +242,11 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
       techDetails: normalizedTech,
     };
 
-    const saved = await onSave(next);
+    const saved = await onSave(next, {
+      novasMidias: midiaDraft
+        .filter((m): m is MidiaDraftItem & { file: File } => Boolean(m.file))
+        .map((m) => ({ file: m.file, kind: m.kind })),
+    });
     if (saved === false) return;
     setMidiaDraft((prev) => {
       revokeBlobDrafts(prev);
@@ -256,8 +264,7 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
         <SheetHeader>
           <SheetTitle>Editar anúncio</SheetTitle>
           <SheetDescription className="text-left">
-            Mesma ficha técnica do cadastro de bem no leilão: marca (com logotipo), mídias, preço e dados do veículo.
-            Integração com API virá depois.
+            Atualize marca, mídias, preço e dados do veículo. Novas mídias são anexadas ao anúncio via API.
           </SheetDescription>
         </SheetHeader>
 
@@ -293,7 +300,7 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
 
             <p className="rounded-2xl border border-zinc-200 bg-zinc-50/80 px-3 py-2 text-xs text-zinc-600">
               Vendedor: <VendedorAdminLink name={anuncio.vendedor} className="text-[13px]" /> (somente leitura neste
-              mock)
+              formulário)
             </p>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start">

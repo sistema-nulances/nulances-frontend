@@ -62,7 +62,10 @@ import {
 import {
   buscarMeuAnuncioPorIdVendedor,
   editarParcialMeuAnuncioVendedor,
+  excluirMeuAnuncioVendedor,
+  gerarUploadMidiaAnuncio,
   listarMeusAnunciosVendedor,
+  suspenderMeuAnuncioVendedor,
 } from "@/lib/repositories/seller-anuncios-repository";
 import type {
   AnuncioResponse,
@@ -358,6 +361,44 @@ function parsePrecoToNumber(precoFmt: string): number | undefined {
   if (!digits) return undefined;
   const value = Number(digits) / 100;
   return Number.isFinite(value) ? value : undefined;
+}
+
+function toMidiaTipoFromFile(file: File): "FOTO" | "VIDEO" {
+  return file.type.startsWith("video/") ? "VIDEO" : "FOTO";
+}
+
+async function uploadNovasMidiasAnuncio(
+  files: Array<{ file: File; kind: "image" | "video" }>
+): Promise<Array<{ tipo: "FOTO" | "VIDEO"; arquivo: string; ordem: number }>> {
+  const uploaded: Array<{ tipo: "FOTO" | "VIDEO"; arquivo: string; ordem: number }> = [];
+
+  for (const { file } of files) {
+    const tipo = toMidiaTipoFromFile(file);
+    const upload = await gerarUploadMidiaAnuncio({
+      nomeArquivo: file.name,
+      contentType: file.type || (tipo === "VIDEO" ? "video/mp4" : "image/jpeg"),
+      tipo,
+    });
+
+    const putRes = await fetch(upload.uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type || "application/octet-stream" },
+      body: file,
+    });
+    if (!putRes.ok) {
+      throw new Error(`Falha no upload da mídia "${file.name}".`);
+    }
+
+    const objectKey = String(upload.objectKey ?? "").trim();
+    if (!objectKey) {
+      throw new Error(`Upload da mídia "${file.name}" sem objectKey válido.`);
+    }
+
+    // A API recalcula ordem após as existentes; no PATCH de anexos pode ser 0.
+    uploaded.push({ tipo, arquivo: objectKey, ordem: 0 });
+  }
+
+  return uploaded;
 }
 
 function labelCondicaoForSheet(raw: string | null | undefined): string {
@@ -867,7 +908,10 @@ export function AdminMarketplaceAnunciosContent({
   }, [rows, filtroMod, searchDebounced]);
 
   const saveEdit = React.useCallback(
-    async (next: MarketplaceAnuncioAdmin) => {
+    async (
+      next: MarketplaceAnuncioAdmin,
+      meta?: { novasMidias: Array<{ file: File; kind: "image" | "video" }> }
+    ) => {
       if (dataSource === "adminApi") {
         try {
           const updated = await editarParcialAdminAnuncio(String(next.id), mapRowToPatchRequest(next));
@@ -892,7 +936,13 @@ export function AdminMarketplaceAnunciosContent({
 
       if (dataSource === "sellerApi") {
         try {
-          const updated = await editarParcialMeuAnuncioVendedor(String(next.id), mapRowToPatchRequest(next));
+          const patchBody = mapRowToPatchRequest(next);
+          const novasMidias = meta?.novasMidias ?? [];
+          if (novasMidias.length > 0) {
+            patchBody.midiasAdicionar = await uploadNovasMidiasAnuncio(novasMidias);
+          }
+
+          const updated = await editarParcialMeuAnuncioVendedor(String(next.id), patchBody);
           const mapped = mapAnuncioResponseToRow(updated);
           setRows((prev) => prev.map((r) => (r.id === mapped.id ? mapped : r)));
           setDetailTarget((d) => (d && d.id === mapped.id ? mapped : d));
@@ -981,13 +1031,35 @@ export function AdminMarketplaceAnunciosContent({
     [dataSource, toast]
   );
 
-  const confirmDelete = React.useCallback(() => {
+  const confirmDelete = React.useCallback(async () => {
     if (!deleteTarget) return;
+
+    if (dataSource === "sellerApi") {
+      try {
+        await excluirMeuAnuncioVendedor(String(deleteTarget.id));
+        setRows((prev) => prev.filter((r) => r.id !== deleteTarget.id));
+        if (detailTarget?.id === deleteTarget.id) setDetailTarget(null);
+        setDeleteTarget(null);
+        toast({
+          type: "success",
+          title: "Anúncio excluído",
+          description: "Seu anúncio foi removido com sucesso.",
+        });
+      } catch (error) {
+        toast({
+          type: "error",
+          title: "Falha ao excluir anúncio",
+          description: parseApiError(error),
+        });
+      }
+      return;
+    }
+
     setRows((prev) => prev.filter((r) => r.id !== deleteTarget.id));
     setDeleteTarget(null);
     if (detailTarget?.id === deleteTarget.id) setDetailTarget(null);
     toast({ type: "success", title: "Anúncio removido", description: "Removido da lista (mock local)." });
-  }, [deleteTarget, detailTarget, toast]);
+  }, [dataSource, deleteTarget, detailTarget?.id, toast]);
 
   const approveAnuncio = React.useCallback(
     async (a: MarketplaceAnuncioAdmin) => {
@@ -1058,6 +1130,40 @@ export function AdminMarketplaceAnunciosContent({
           toast({
             type: "error",
             title: "Falha ao atualizar status do anúncio",
+            description: parseApiError(error),
+          });
+        } finally {
+          setLoadingActionId(null);
+        }
+        return;
+      }
+
+      if (dataSource === "sellerApi") {
+        if (a.moderacao === "suspenso") {
+          toast({
+            type: "warning",
+            title: "Anúncio já suspenso",
+            description: "Este anúncio já está suspenso.",
+          });
+          return;
+        }
+
+        setLoadingActionId(String(a.id));
+        try {
+          const statusRes = await suspenderMeuAnuncioVendedor(String(a.id), {
+            motivo: "Suspenso pelo vendedor",
+          });
+          setRows((prev) => prev.map((r) => (r.id === a.id ? { ...r, moderacao: "suspenso" } : r)));
+          setDetailTarget((d) => (d && d.id === a.id ? { ...d, moderacao: "suspenso" } : d));
+          toast({
+            type: "success",
+            title: "Anúncio suspenso",
+            description: statusRes.mensagem?.trim() || "O anúncio foi suspenso com sucesso.",
+          });
+        } catch (error) {
+          toast({
+            type: "error",
+            title: "Falha ao suspender anúncio",
             description: parseApiError(error),
           });
         } finally {
@@ -1250,11 +1356,18 @@ export function AdminMarketplaceAnunciosContent({
                       className="rounded-full"
                       onClick={() => void toggleSuspend(a)}
                       loading={loadingActionId === String(a.id)}
-                      disabled={loadingActionId === String(a.id)}
+                      disabled={
+                        loadingActionId === String(a.id) ||
+                        (dataSource === "sellerApi" && a.moderacao === "suspenso")
+                      }
                     >
                       <NoSymbolIcon className="mr-1.5 h-4 w-4" aria-hidden />
                       {loadingActionId === String(a.id)
                         ? "Atualizando..."
+                        : dataSource === "sellerApi"
+                          ? a.moderacao === "suspenso"
+                            ? "Já suspenso"
+                            : "Suspender"
                         : a.moderacao === "pendente"
                           ? "Recusar anúncio"
                           : a.moderacao === "suspenso"
@@ -1371,10 +1484,17 @@ export function AdminMarketplaceAnunciosContent({
                     className="rounded-full"
                     onClick={() => void toggleSuspend(detailTarget)}
                     loading={loadingActionId === String(detailTarget.id)}
-                    disabled={loadingActionId === String(detailTarget.id)}
+                    disabled={
+                      loadingActionId === String(detailTarget.id) ||
+                      (dataSource === "sellerApi" && detailTarget.moderacao === "suspenso")
+                    }
                   >
                     {loadingActionId === String(detailTarget.id)
                       ? "Atualizando..."
+                      : dataSource === "sellerApi"
+                        ? detailTarget.moderacao === "suspenso"
+                          ? "Já suspenso"
+                          : "Suspender"
                       : detailTarget.moderacao === "pendente"
                         ? "Recusar anúncio"
                         : detailTarget.moderacao === "suspenso"
@@ -1402,8 +1522,10 @@ export function AdminMarketplaceAnunciosContent({
         description={
           deleteTarget ? (
             <>
-              O anúncio <strong className="font-medium text-zinc-800">{deleteTarget.titulo}</strong> será removido da
-              lista (mock local).
+              O anúncio <strong className="font-medium text-zinc-800">{deleteTarget.titulo}</strong>{" "}
+              {dataSource === "sellerApi"
+                ? "será excluído permanentemente."
+                : "será removido da lista (mock local)."}
             </>
           ) : null
         }

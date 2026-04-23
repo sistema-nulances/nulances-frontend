@@ -124,6 +124,8 @@ export type EditarAnuncioRequest = {
   placaVeiculo?: string;
   descricao?: string;
   detalheTecnico?: EditarAnuncioDetalheTecnicoRequest;
+  /** Novas mídias para anexar ao anúncio existente (não remove mídias antigas). */
+  midiasAdicionar?: AnuncioMidiaRequest[];
 };
 
 export type AnuncioDetalheTecnicoResponse = {
@@ -208,6 +210,18 @@ export type StatusAnuncioApi =
   | "REPROVADO"
   | "CANCELADO"
   | (string & {});
+
+export type SuspenderMeuAnuncioRequest = {
+  motivo?: string;
+};
+
+export type AnuncioStatusResponse = {
+  id?: string;
+  status?: StatusAnuncioApi | null;
+  mensagem?: string;
+  motivo?: string | null;
+  atualizadoEm?: string;
+};
 
 export type AnuncioMidiaListResponse = {
   id?: string;

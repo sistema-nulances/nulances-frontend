@@ -1,11 +1,13 @@
 import { apiFetch } from "@/lib/api/api-fetch";
 import type {
+  AnuncioStatusResponse,
   AnuncioVendedorListResponse,
   EditarAnuncioRequest,
   AnuncioResponse,
   CriarAnuncioRequest,
   GerarUploadMidiaAnuncioRequest,
   ListarMeusAnunciosRequest,
+  SuspenderMeuAnuncioRequest,
   SpringPage,
   UploadMidiaAnuncioResponse,
 } from "@/lib/repositories/types/seller-anuncio.types";
@@ -56,5 +58,21 @@ export async function editarParcialMeuAnuncioVendedor(
   return apiFetch<AnuncioResponse>(`/marketplace/anuncios/meus/${encodeURIComponent(id)}`, {
     method: "PATCH",
     body: JSON.stringify(body),
+  });
+}
+
+export async function suspenderMeuAnuncioVendedor(
+  id: string,
+  body?: SuspenderMeuAnuncioRequest
+): Promise<AnuncioStatusResponse> {
+  return apiFetch<AnuncioStatusResponse>(`/marketplace/anuncios/meus/${encodeURIComponent(id)}/suspender`, {
+    method: "PATCH",
+    body: JSON.stringify(body ?? {}),
+  });
+}
+
+export async function excluirMeuAnuncioVendedor(id: string): Promise<void> {
+  await apiFetch<void>(`/marketplace/anuncios/meus/${encodeURIComponent(id)}`, {
+    method: "DELETE",
   });
 }
