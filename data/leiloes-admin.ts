@@ -16,6 +16,8 @@ export type LeilaoAgendaBem = {
 export type LeilaoAdmin = {
   id: string;
   titulo: string;
+  /** URL opcional de transmissão ao vivo (http/https). */
+  linkLive?: string | null;
   /** Cidade (presencial) ou texto fixo tipo "Online" quando `modalidade` é online. */
   local: string;
   /** Padrão `presencial` quando ausente (seeds antigos). */

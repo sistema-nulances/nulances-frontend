@@ -2,6 +2,8 @@ export type FormatoLeilaoApi = "ONLINE" | "PRESENCIAL";
 
 export type LeilaoCreateRequest = {
   titulo: string;
+  /** URL opcional da live (http/https). */
+  linkLive?: string | null;
   formato: FormatoLeilaoApi;
   cidade?: string | null;
   endereco?: string | null;
@@ -22,6 +24,8 @@ export type LeilaoCreateRequest = {
 export type LeilaoResponse = {
   id: string;
   titulo: string;
+  /** URL opcional da live (http/https). */
+  linkLive?: string | null;
   formato: string;
   cidade?: string | null;
   endereco?: string | null;
@@ -80,6 +84,8 @@ export type StatusLeilaoApi = "ABERTO" | "EM_BREVE" | "ENCERRADO" | (string & {}
 export type LeilaoPainelResponse = {
   leilaoId: string;
   titulo: string;
+  /** URL opcional da live (http/https). */
+  linkLive?: string | null;
   leiloeiro: string;
   formato: FormatoLeilaoApi | (string & {});
   cidade?: string | null;

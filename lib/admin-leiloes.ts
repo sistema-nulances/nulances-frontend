@@ -55,6 +55,7 @@ export function formatLeilaoDataLegivel(d: Date): string {
 
 export type NovoLeilaoPayload = {
   titulo: string;
+  linkLive?: string | null;
   local: string;
   leiloeiroNome: string;
   comitenteId: string;
@@ -68,6 +69,7 @@ export type NovoLeilaoPayload = {
 export function buildLeilaoAdminFromNovo(payload: NovoLeilaoPayload, id: string): LeilaoAdmin {
   const {
     titulo,
+    linkLive,
     local,
     leiloeiroNome,
     comitenteId,
@@ -90,6 +92,7 @@ export function buildLeilaoAdminFromNovo(payload: NovoLeilaoPayload, id: string)
   return {
     id,
     titulo: titulo.trim(),
+    linkLive: linkLive?.trim() || null,
     local: local.trim(),
     modalidade,
     dataAbertura: formatLeilaoDataLegivel(eventoInicio),
@@ -141,6 +144,7 @@ export function leilaoResponseParaAdmin(
   return {
     id: r.id,
     titulo: r.titulo,
+    linkLive: r.linkLive ?? null,
     local:
       formatoLeilaoApiParaUi(r.formato) === "online"
         ? "Online"

@@ -20,6 +20,7 @@ import { CIDADES_BRASIL_OPTIONS } from "@/data/cidades-brasil";
 import type { LeilaoModalidade } from "@/data/leiloes-admin";
 import { cn } from "@/lib/cn";
 import type { LeilaoCreateRequest } from "@/lib/repositories/types/leilao.types";
+import { isValidHttpUrl, normalizeOptionalHttpUrl } from "@/lib/leilao-live-url";
 import {
   formatDateTimeLocalSaoPaulo,
   formatDateTimePtBrSaoPaulo,
@@ -157,6 +158,7 @@ type NovoLeilaoValidation = { ok: boolean; errors: string[] };
 function computeNovoLeilaoValidation(
   input: {
     titulo: string;
+    linkLive: string;
     modalidade: LeilaoModalidade;
     local: string;
     leiloeiroId: string;
@@ -169,6 +171,9 @@ function computeNovoLeilaoValidation(
 ): NovoLeilaoValidation {
   const errors: string[] = [];
   if (!input.titulo.trim()) errors.push("Informe o título do evento.");
+  if (input.linkLive.trim() && !isValidHttpUrl(input.linkLive)) {
+    errors.push("Link da live inválido. Use uma URL http ou https.");
+  }
   if (input.modalidade === "presencial" && !input.local.trim()) {
     errors.push("Selecione a cidade do pregão presencial.");
   }
@@ -320,6 +325,7 @@ export function NovoLeilaoSheet({
 }) {
   const [now, setNow] = React.useState(() => new Date());
   const [titulo, setTitulo] = React.useState("");
+  const [linkLive, setLinkLive] = React.useState("");
   const [modalidade, setModalidade] = React.useState<LeilaoModalidade>("presencial");
   const [local, setLocal] = React.useState("");
   const [leiloeiroId, setLeiloeiroId] = React.useState("");
@@ -335,6 +341,7 @@ export function NovoLeilaoSheet({
   const reset = React.useCallback(() => {
     prevPautaProntaRef.current = false;
     setTitulo("");
+    setLinkLive("");
     setModalidade("presencial");
     setLocal("");
     setLeiloeiroId("");
@@ -427,6 +434,7 @@ export function NovoLeilaoSheet({
       computeNovoLeilaoValidation(
         {
           titulo,
+          linkLive,
           modalidade,
           local,
           leiloeiroId,
@@ -437,7 +445,7 @@ export function NovoLeilaoSheet({
         },
         now
       ),
-    [titulo, modalidade, local, leiloeiroId, comitenteId, agendaRows, eventoInicio, eventoFim, now]
+    [titulo, linkLive, modalidade, local, leiloeiroId, comitenteId, agendaRows, eventoInicio, eventoFim, now]
   );
 
   const minDateTimeLocal = formatDateTimeLocalSaoPaulo(now);
@@ -457,6 +465,7 @@ export function NovoLeilaoSheet({
     const v = computeNovoLeilaoValidation(
       {
         titulo,
+        linkLive,
         modalidade,
         local,
         leiloeiroId,
@@ -488,6 +497,7 @@ export function NovoLeilaoSheet({
     void Promise.resolve(
       onSave({
         titulo: titulo.trim(),
+        linkLive: normalizeOptionalHttpUrl(linkLive),
         formato: modalidade === "online" ? "ONLINE" : "PRESENCIAL",
         cidade: modalidade === "online" ? null : local.trim() || null,
         endereco: modalidade === "online" ? null : local.trim() || null,
@@ -520,6 +530,22 @@ export function NovoLeilaoSheet({
               className="mt-1 rounded-2xl"
               required
             />
+          </div>
+
+          <div>
+            <Label htmlFor="nl-link-live">Link da live (opcional)</Label>
+            <Input
+              id="nl-link-live"
+              value={linkLive}
+              onChange={(e) => setLinkLive(e.target.value)}
+              placeholder="https://www.youtube.com/watch?v=..."
+              className="mt-1 rounded-2xl"
+              inputMode="url"
+              autoComplete="off"
+            />
+            <p className="mt-1.5 text-xs text-zinc-500">
+              Aceita URL com <code>http</code> ou <code>https</code>. Se vazio, será salvo como nulo.
+            </p>
           </div>
 
           <div>

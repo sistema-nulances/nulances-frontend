@@ -141,6 +141,7 @@ export function mapPainelApiToAdminPanel(painel: LeilaoPainelApiResponse): {
   const leilao: LeilaoAdmin = {
     id: painel.leilaoId,
     titulo: painel.titulo,
+    linkLive: painel.linkLive ?? null,
     modalidade: String(painel.formato).toUpperCase() === "ONLINE" ? "online" : "presencial",
     local: painel.cidade ?? "Online",
     dataAbertura:

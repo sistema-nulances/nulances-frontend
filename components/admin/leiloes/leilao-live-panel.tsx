@@ -35,6 +35,11 @@ import {
 import { formatRelogioHmsSaoPaulo } from "@/lib/sao-paulo-datetime";
 import { getStatusLabel } from "@/utils/status-auction";
 import { cn } from "@/lib/cn";
+import {
+  buildYouTubeEmbedUrl,
+  extractYouTubeVideoId,
+  normalizeOptionalHttpUrl,
+} from "@/lib/leilao-live-url";
 
 const ARREMATACAO_MS = 12_000;
 const ARREMAT_STORAGE_KEY = (itemId: number) => `nul-admin-arrem-v1-${itemId}`;
@@ -320,6 +325,12 @@ export function LeilaoLivePanel({ leilao, lotes }: { leilao: LeilaoAdmin; lotes:
     if (!end) return null;
     return formatMsAsCountdown(end.getTime() - clock);
   }, [bemEmPauta, clock]);
+  const liveUrl = React.useMemo(() => normalizeOptionalHttpUrl(leilao.linkLive), [leilao.linkLive]);
+  const youtubeEmbedUrl = React.useMemo(() => {
+    if (!liveUrl) return null;
+    const videoId = extractYouTubeVideoId(liveUrl);
+    return videoId ? buildYouTubeEmbedUrl(videoId) : null;
+  }, [liveUrl]);
 
   const updatedAt = formatRelogioHmsSaoPaulo(new Date(clock));
 
@@ -367,6 +378,37 @@ export function LeilaoLivePanel({ leilao, lotes }: { leilao: LeilaoAdmin; lotes:
           </p>
         </div>
         <div className="flex w-full flex-col gap-3 sm:max-w-sm sm:shrink-0">
+          {liveUrl ? (
+            <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                Transmissão ao vivo
+              </p>
+              {youtubeEmbedUrl ? (
+                <div className="mt-2 overflow-hidden rounded-xl border border-zinc-200">
+                  <iframe
+                    title="Live do leilão"
+                    src={youtubeEmbedUrl}
+                    className="aspect-video w-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                  />
+                </div>
+              ) : (
+                <p className="mt-2 text-xs text-zinc-500">
+                  A plataforma não reconheceu vídeo embutível para este link. Abra a live em nova aba.
+                </p>
+              )}
+              <a
+                href={liveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-flex text-xs font-semibold text-[var(--nulance-purple)] underline decoration-[var(--nulance-purple)]/40 underline-offset-2 hover:decoration-[var(--nulance-purple)]"
+              >
+                Assistir live
+              </a>
+            </div>
+          ) : null}
           <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
               Encerramento geral do evento
