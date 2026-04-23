@@ -40,6 +40,35 @@ export async function buscarPainelLeilaoAdminPorId(id: string): Promise<LeilaoPa
   return apiFetch<LeilaoPainelResponse>(`/admin/leiloes/${encodeURIComponent(id)}/painel`, { method: "GET" });
 }
 
+/** Endpoint público do painel do leilão (sem token) para detalhes e link de live. */
+export async function buscarPainelLeilaoPublicoPorId(id: string): Promise<LeilaoPainelResponse> {
+  const attempts: Array<() => Promise<LeilaoPainelResponse>> = [
+    () =>
+      apiFetch<LeilaoPainelResponse>(`/leiloes/${encodeURIComponent(id)}/painel`, {
+        method: "GET",
+        skipAuth: true,
+      }),
+    () =>
+      apiFetch<LeilaoPainelResponse>(`/leiloes/${encodeURIComponent(id)}/painel`, {
+        method: "GET",
+      }),
+  ];
+
+  let lastError: unknown = null;
+  for (const run of attempts) {
+    try {
+      return await run();
+    } catch (err) {
+      lastError = err;
+      if (err instanceof ApiError && err.status !== 401 && err.status !== 403) {
+        throw err;
+      }
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Não foi possível carregar painel do leilão.");
+}
+
 /** Endpoint público para detalhe de item de leilão (sem token). */
 export async function buscarItemLeilaoPublicoPorId(itemId: string): Promise<LeilaoItemDetalheResponse> {
   const attempts: Array<() => Promise<LeilaoItemDetalheResponse>> = [

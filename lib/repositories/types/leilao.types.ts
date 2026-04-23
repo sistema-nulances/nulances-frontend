@@ -134,6 +134,8 @@ export type LeilaoPainelResponse = {
 
 export type LeilaoItemDetalheResponse = {
   leilaoId: string;
+  /** URL opcional da live (http/https). */
+  linkLive?: string | null;
   leilaoLoteId: string;
   leilaoLoteBemId: string;
   loteId: string;

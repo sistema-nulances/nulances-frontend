@@ -24,7 +24,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/cn";
 import { getApiOrigin } from "@/lib/api/api-url";
 import { documentacaoKycTotalmenteAprovada } from "@/lib/documentos-validacao-kyc";
-import { buscarItemLeilaoPublicoPorId } from "@/lib/repositories/admin-leiloes-repository";
+import {
+  buscarItemLeilaoPublicoPorId,
+  buscarPainelLeilaoPublicoPorId,
+} from "@/lib/repositories/admin-leiloes-repository";
 import { enviarLance } from "@/lib/repositories/lances-repository";
 import { ApiError } from "@/lib/repositories/types/auth.types";
 import type { LanceAtualizadoEvent } from "@/lib/repositories/types/lance.types";
@@ -35,6 +38,7 @@ import type {
 import { AuctionDetailPageContentSkeleton } from "@/components/skeletons";
 import { BemMarcaLogo } from "@/components/admin/bens/bem-marca-logo";
 import { formatEnumDisplayLabel } from "@/lib/format-enum-label";
+import { buildYouTubeEmbedUrl, extractYouTubeVideoId, normalizeOptionalHttpUrl } from "@/lib/leilao-live-url";
 import { marcaLeilaoItemLabel, tituloCompletoBemLeilao } from "@/lib/leilao-bem-exibicao";
 import { getStatusClasses, getStatusLabel } from "@/utils/status-auction";
 import type { AuctionStatus } from "@/data/auction-items";
@@ -88,6 +92,7 @@ export default function AuctionDetailPage() {
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [nowMs, setNowMs] = useState<number>(Date.now());
   const [submittingBid, setSubmittingBid] = useState(false);
+  const [linkLive, setLinkLive] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -100,8 +105,19 @@ export default function AuctionDetailPage() {
         const data = await buscarItemLeilaoPublicoPorId(id);
         if (!active) return;
         setItem(data);
+        setLinkLive(data.linkLive ?? null);
         const first = data.midias?.[0]?.arquivo?.trim();
         setActiveImage(first || "/BANNER-MOCK1.png");
+
+        if (data.leilaoId) {
+          try {
+            const painel = await buscarPainelLeilaoPublicoPorId(data.leilaoId);
+            if (!active) return;
+            if (painel.linkLive != null) setLinkLive(painel.linkLive);
+          } catch {
+            // mantém experiência principal mesmo se o painel falhar
+          }
+        }
       } catch (e) {
         if (!active) return;
         const message = e instanceof Error ? e.message : "Não foi possível carregar o item do leilão.";
@@ -145,6 +161,12 @@ export default function AuctionDetailPage() {
   );
 
   const currentBidValue = item?.lanceAtual ?? item?.valorInicial ?? 0;
+  const liveUrl = useMemo(() => normalizeOptionalHttpUrl(linkLive), [linkLive]);
+  const youtubeEmbedUrl = useMemo(() => {
+    if (!liveUrl) return null;
+    const videoId = extractYouTubeVideoId(liveUrl);
+    return videoId ? buildYouTubeEmbedUrl(videoId) : null;
+  }, [liveUrl]);
   const aberturaMs = item?.aberturaDisputa ? new Date(item.aberturaDisputa).getTime() : NaN;
   const encerramentoMs = item?.encerramentoDisputa ? new Date(item.encerramentoDisputa).getTime() : NaN;
   const ultimoLance = item?.historicoLances?.[0];
@@ -423,6 +445,39 @@ export default function AuctionDetailPage() {
                       <span>{item.cidade || "Online"}</span>
                     </div>
                   </div>
+
+                  {liveUrl ? (
+                    <div className="rounded-3xl bg-white p-6 ring-1 ring-zinc-200 sm:p-8">
+                      <div className="mb-4 flex items-center justify-between gap-3">
+                        <h3 className="text-lg font-bold tracking-tight text-zinc-900">Live do leilão</h3>
+                        <a
+                          href={liveUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center rounded-xl bg-nulance-purple px-4 py-2 text-sm font-semibold text-white transition hover:bg-nulance-purple/90"
+                        >
+                          Ver live
+                        </a>
+                      </div>
+                      {youtubeEmbedUrl ? (
+                        <div className="overflow-hidden rounded-2xl ring-1 ring-zinc-200">
+                          <iframe
+                            title="Live do leilão"
+                            src={youtubeEmbedUrl}
+                            className="aspect-video w-full"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerPolicy="strict-origin-when-cross-origin"
+                            allowFullScreen
+                          />
+                        </div>
+                      ) : (
+                        <p className="text-sm text-zinc-600">
+                          Este link de transmissão não suporta player embutido aqui. Clique em{" "}
+                          <strong>Ver live</strong> para assistir.
+                        </p>
+                      )}
+                    </div>
+                  ) : null}
 
                   <div className="rounded-3xl bg-white p-6 ring-1 ring-zinc-200 sm:p-8">
                     <h3 className="mb-6 text-lg font-bold tracking-tight text-zinc-900">Detalhes do Veículo</h3>

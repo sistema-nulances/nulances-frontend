@@ -378,37 +378,6 @@ export function LeilaoLivePanel({ leilao, lotes }: { leilao: LeilaoAdmin; lotes:
           </p>
         </div>
         <div className="flex w-full flex-col gap-3 sm:max-w-sm sm:shrink-0">
-          {liveUrl ? (
-            <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
-                Transmissão ao vivo
-              </p>
-              {youtubeEmbedUrl ? (
-                <div className="mt-2 overflow-hidden rounded-xl border border-zinc-200">
-                  <iframe
-                    title="Live do leilão"
-                    src={youtubeEmbedUrl}
-                    className="aspect-video w-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    allowFullScreen
-                  />
-                </div>
-              ) : (
-                <p className="mt-2 text-xs text-zinc-500">
-                  A plataforma não reconheceu vídeo embutível para este link. Abra a live em nova aba.
-                </p>
-              )}
-              <a
-                href={liveUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 inline-flex text-xs font-semibold text-[var(--nulance-purple)] underline decoration-[var(--nulance-purple)]/40 underline-offset-2 hover:decoration-[var(--nulance-purple)]"
-              >
-                Assistir live
-              </a>
-            </div>
-          ) : null}
           <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
               Encerramento geral do evento
@@ -433,6 +402,44 @@ export function LeilaoLivePanel({ leilao, lotes }: { leilao: LeilaoAdmin; lotes:
           )}
         </div>
       </div>
+
+      {liveUrl ? (
+        <section className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                Transmissão ao vivo
+              </p>
+              <p className="mt-1 text-sm text-zinc-700">Acompanhe o leilão em tempo real.</p>
+            </div>
+            <a
+              href={liveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-9 items-center rounded-full bg-[var(--nulance-purple)] px-4 text-sm font-semibold text-white transition hover:opacity-90"
+            >
+              Ver live
+            </a>
+          </div>
+
+          {youtubeEmbedUrl ? (
+            <div className="overflow-hidden rounded-xl border border-zinc-200">
+              <iframe
+                title="Live do leilão"
+                src={youtubeEmbedUrl}
+                className="aspect-video w-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
+            </div>
+          ) : (
+            <p className="text-sm text-zinc-600">
+              Não foi possível embutir esse link aqui. Use o botão <strong>Ver live</strong> para abrir a transmissão.
+            </p>
+          )}
+        </section>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <AdminMetricTile
