@@ -82,7 +82,10 @@ export type AnuncioDetalheTecnicoRequest = {
   laudoCautelarInspecao?: string;
 };
 
-export type EditarAnuncioDetalheTecnicoRequest = Partial<AnuncioDetalheTecnicoRequest>;
+/** PATCH: strings preenchidas ou `null` para limpar o campo na API (não use `undefined` nos valores). */
+export type EditarAnuncioDetalheTecnicoRequest = Partial<{
+  [K in keyof AnuncioDetalheTecnicoRequest]: string | null;
+}>;
 
 export type CriarAnuncioRequest = {
   marca: string;

@@ -468,6 +468,12 @@ function mapAnuncioResponseToRow(response: AnuncioResponse): MarketplaceAnuncioA
   };
 }
 
+/** Valor de ficha técnica no PATCH: texto ou `null` se vazio (a API interpreta como limpeza). */
+function detalheTecnicoPatchValue(raw: string | undefined | null): string | null {
+  const t = String(raw ?? "").trim();
+  return t.length > 0 ? t : null;
+}
+
 function mapRowToPatchRequest(next: MarketplaceAnuncioAdmin): EditarAnuncioRequest {
   const quilometragemDigits = String(next.km ?? "").replace(/\D/g, "");
   const anoDigits = String(next.ano ?? "").replace(/\D/g, "");
@@ -491,46 +497,46 @@ function mapRowToPatchRequest(next: MarketplaceAnuncioAdmin): EditarAnuncioReque
     descricao: next.descricao?.trim() || undefined,
     detalheTecnico: next.techDetails
       ? {
-          motorizacao: next.techDetails.motorizacao?.trim() || undefined,
-          cilindros: next.techDetails.cilindrosCilindrada?.trim() || undefined,
-          potenciaCombinada: next.techDetails.potenciaCombinada?.trim() || undefined,
-          torqueCombinado: next.techDetails.torqueCombinado?.trim() || undefined,
-          transmissao: next.techDetails.transmissao?.trim() || undefined,
-          tracao: next.techDetails.tracao?.trim() || undefined,
-          modosConducao: next.techDetails.modosConducao?.trim() || undefined,
-          carroceria: next.techDetails.carroceria?.trim() || undefined,
-          comprimentoLarguraAltura: next.techDetails.comprimentoLarguraAltura?.trim() || undefined,
-          entreEixos: next.techDetails.entreEixos?.trim() || undefined,
-          portaMalas: next.techDetails.portaMalas?.trim() || undefined,
-          tanqueCombustivel: next.techDetails.tanqueCombustivel?.trim() || undefined,
-          ciclosUrbano: next.techDetails.ciclosUrbanoRodoviario?.trim() || undefined,
-          usoModoEletrico: next.techDetails.usoModoEletrico?.trim() || undefined,
-          emissoesSeloEficiencia: next.techDetails.emissoesSeloEficiencia?.trim() || undefined,
-          freiosDianteiros: next.techDetails.freiosDianteiros?.trim() || undefined,
-          suspensaoDianteira: next.techDetails.suspensaoDianteira?.trim() || undefined,
-          suspensaoTraseira: next.techDetails.suspensaoTraseira?.trim() || undefined,
-          medidaPneus: next.techDetails.medidaPneus?.trim() || undefined,
-          estepe: next.techDetails.estepe?.trim() || undefined,
-          airbags: next.techDetails.airbags?.trim() || undefined,
-          absDistribuicaoEletronica: next.techDetails.absDistribuicao?.trim() || undefined,
-          controleEstabilidadeTracao:
-            next.techDetails.controleEstabilidadeTracao?.trim() || undefined,
-          assistentePartidaRampa: next.techDetails.assistentePartidaRampa?.trim() || undefined,
-          cameraSensoresEstacionamento: next.techDetails.cameraSensores?.trim() || undefined,
-          arCondicionadoClimatizador:
-            next.techDetails.arCondicionadoClimatizador?.trim() || undefined,
-          direcao: next.techDetails.direcao?.trim() || undefined,
-          bancosVolante: next.techDetails.bancosVolante?.trim() || undefined,
-          multimidiaConectividade:
-            next.techDetails.multimidiaConectividade?.trim() || undefined,
-          rodasIluminacao: next.techDetails.rodasIluminacao?.trim() || undefined,
-          vidrosTravas: next.techDetails.vidrosTravas?.trim() || undefined,
-          procedenciaNulances: next.techDetails.procedenciaNuLances?.trim() || undefined,
-          licenciamentoDebitos: next.techDetails.licenciamentoDebitos?.trim() || undefined,
-          restricoesGravame: next.techDetails.restricoesGravame?.trim() || undefined,
-          chavesManual: next.techDetails.chavesManual?.trim() || undefined,
-          laudoCautelarInspecao:
-            next.techDetails.laudoCautelarInspecao?.trim() || undefined,
+          motorizacao: detalheTecnicoPatchValue(next.techDetails.motorizacao),
+          cilindros: detalheTecnicoPatchValue(next.techDetails.cilindrosCilindrada),
+          potenciaCombinada: detalheTecnicoPatchValue(next.techDetails.potenciaCombinada),
+          torqueCombinado: detalheTecnicoPatchValue(next.techDetails.torqueCombinado),
+          transmissao: detalheTecnicoPatchValue(next.techDetails.transmissao),
+          tracao: detalheTecnicoPatchValue(next.techDetails.tracao),
+          modosConducao: detalheTecnicoPatchValue(next.techDetails.modosConducao),
+          carroceria: detalheTecnicoPatchValue(next.techDetails.carroceria),
+          comprimentoLarguraAltura: detalheTecnicoPatchValue(next.techDetails.comprimentoLarguraAltura),
+          entreEixos: detalheTecnicoPatchValue(next.techDetails.entreEixos),
+          portaMalas: detalheTecnicoPatchValue(next.techDetails.portaMalas),
+          tanqueCombustivel: detalheTecnicoPatchValue(next.techDetails.tanqueCombustivel),
+          ciclosUrbano: detalheTecnicoPatchValue(next.techDetails.ciclosUrbanoRodoviario),
+          usoModoEletrico: detalheTecnicoPatchValue(next.techDetails.usoModoEletrico),
+          emissoesSeloEficiencia: detalheTecnicoPatchValue(next.techDetails.emissoesSeloEficiencia),
+          freiosDianteiros: detalheTecnicoPatchValue(next.techDetails.freiosDianteiros),
+          suspensaoDianteira: detalheTecnicoPatchValue(next.techDetails.suspensaoDianteira),
+          suspensaoTraseira: detalheTecnicoPatchValue(next.techDetails.suspensaoTraseira),
+          medidaPneus: detalheTecnicoPatchValue(next.techDetails.medidaPneus),
+          estepe: detalheTecnicoPatchValue(next.techDetails.estepe),
+          airbags: detalheTecnicoPatchValue(next.techDetails.airbags),
+          absDistribuicaoEletronica: detalheTecnicoPatchValue(next.techDetails.absDistribuicao),
+          controleEstabilidadeTracao: detalheTecnicoPatchValue(
+            next.techDetails.controleEstabilidadeTracao
+          ),
+          assistentePartidaRampa: detalheTecnicoPatchValue(next.techDetails.assistentePartidaRampa),
+          cameraSensoresEstacionamento: detalheTecnicoPatchValue(next.techDetails.cameraSensores),
+          arCondicionadoClimatizador: detalheTecnicoPatchValue(
+            next.techDetails.arCondicionadoClimatizador
+          ),
+          direcao: detalheTecnicoPatchValue(next.techDetails.direcao),
+          bancosVolante: detalheTecnicoPatchValue(next.techDetails.bancosVolante),
+          multimidiaConectividade: detalheTecnicoPatchValue(next.techDetails.multimidiaConectividade),
+          rodasIluminacao: detalheTecnicoPatchValue(next.techDetails.rodasIluminacao),
+          vidrosTravas: detalheTecnicoPatchValue(next.techDetails.vidrosTravas),
+          procedenciaNulances: detalheTecnicoPatchValue(next.techDetails.procedenciaNuLances),
+          licenciamentoDebitos: detalheTecnicoPatchValue(next.techDetails.licenciamentoDebitos),
+          restricoesGravame: detalheTecnicoPatchValue(next.techDetails.restricoesGravame),
+          chavesManual: detalheTecnicoPatchValue(next.techDetails.chavesManual),
+          laudoCautelarInspecao: detalheTecnicoPatchValue(next.techDetails.laudoCautelarInspecao),
         }
       : undefined,
   };

@@ -516,9 +516,10 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
             </div>
 
             <section className="border-t border-zinc-100 pt-4">
-              <h3 className="text-sm font-semibold text-zinc-900">Ficha técnica detalhada (obrigatória)</h3>
+              <h3 className="text-sm font-semibold text-zinc-900">Ficha técnica detalhada (opcional)</h3>
               <p className="mt-1 text-xs text-zinc-500">
-                Estes campos alimentam os blocos exibidos em "Ver detalhe".
+                Campos vazios são enviados como nulos na API para limpar o dado. Preencha só o que quiser exibir em
+                &quot;Ver detalhe&quot;.
               </p>
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
@@ -526,7 +527,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <textarea
                     id="tech-motorizacao"
                     rows={2}
-                    required
                     value={techDetails.motorizacao}
                     onChange={(e) => setTechDetails((p) => ({ ...p, motorizacao: e.target.value }))}
                     className={cn(
@@ -539,7 +539,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-cilindros">Cilindros / cilindrada</Label>
                   <Input
                     id="tech-cilindros"
-                    required
                     value={techDetails.cilindrosCilindrada}
                     onChange={(e) =>
                       setTechDetails((p) => ({ ...p, cilindrosCilindrada: e.target.value }))
@@ -552,7 +551,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-potencia">Potência combinada (CV)</Label>
                   <Input
                     id="tech-potencia"
-                    required
                     value={techDetails.potenciaCombinada}
                     onChange={(e) => setTechDetails((p) => ({ ...p, potenciaCombinada: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -563,7 +561,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-torque">Torque combinado</Label>
                   <Input
                     id="tech-torque"
-                    required
                     value={techDetails.torqueCombinado}
                     onChange={(e) => setTechDetails((p) => ({ ...p, torqueCombinado: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -574,7 +571,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-transmissao">Transmissão</Label>
                   <Input
                     id="tech-transmissao"
-                    required
                     value={techDetails.transmissao}
                     onChange={(e) => setTechDetails((p) => ({ ...p, transmissao: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -585,7 +581,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-tracao">Tração</Label>
                   <Input
                     id="tech-tracao"
-                    required
                     value={techDetails.tracao}
                     onChange={(e) => setTechDetails((p) => ({ ...p, tracao: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -596,7 +591,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-modos">Modos de condução</Label>
                   <Input
                     id="tech-modos"
-                    required
                     value={techDetails.modosConducao}
                     onChange={(e) => setTechDetails((p) => ({ ...p, modosConducao: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -607,7 +601,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-carroceria">Carroceria</Label>
                   <Input
                     id="tech-carroceria"
-                    required
                     value={techDetails.carroceria}
                     onChange={(e) => setTechDetails((p) => ({ ...p, carroceria: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -618,7 +611,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-dimensoes">Comprimento / largura / altura</Label>
                   <Input
                     id="tech-dimensoes"
-                    required
                     value={techDetails.comprimentoLarguraAltura}
                     onChange={(e) =>
                       setTechDetails((p) => ({ ...p, comprimentoLarguraAltura: e.target.value }))
@@ -631,7 +623,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-entre-eixos">Entre-eixos</Label>
                   <Input
                     id="tech-entre-eixos"
-                    required
                     value={techDetails.entreEixos}
                     onChange={(e) => setTechDetails((p) => ({ ...p, entreEixos: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -642,7 +633,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-porta-malas">Porta-malas</Label>
                   <Input
                     id="tech-porta-malas"
-                    required
                     value={techDetails.portaMalas}
                     onChange={(e) => setTechDetails((p) => ({ ...p, portaMalas: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -653,7 +643,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-tanque">Tanque de combustível</Label>
                   <Input
                     id="tech-tanque"
-                    required
                     value={techDetails.tanqueCombustivel}
                     onChange={(e) => setTechDetails((p) => ({ ...p, tanqueCombustivel: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -664,7 +653,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-ciclos">Ciclos urbano / rodoviário</Label>
                   <Input
                     id="tech-ciclos"
-                    required
                     value={techDetails.ciclosUrbanoRodoviario}
                     onChange={(e) =>
                       setTechDetails((p) => ({ ...p, ciclosUrbanoRodoviario: e.target.value }))
@@ -677,7 +665,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-eletrico">Uso em modo elétrico</Label>
                   <Input
                     id="tech-eletrico"
-                    required
                     value={techDetails.usoModoEletrico}
                     onChange={(e) => setTechDetails((p) => ({ ...p, usoModoEletrico: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -688,7 +675,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-emissoes">Emissões / selo de eficiência</Label>
                   <Input
                     id="tech-emissoes"
-                    required
                     value={techDetails.emissoesSeloEficiencia}
                     onChange={(e) =>
                       setTechDetails((p) => ({ ...p, emissoesSeloEficiencia: e.target.value }))
@@ -701,7 +687,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-freios-d">Freios dianteiros</Label>
                   <Input
                     id="tech-freios-d"
-                    required
                     value={techDetails.freiosDianteiros}
                     onChange={(e) => setTechDetails((p) => ({ ...p, freiosDianteiros: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -712,7 +697,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-freios-t">Freios traseiros</Label>
                   <Input
                     id="tech-freios-t"
-                    required
                     value={techDetails.freiosTraseiros}
                     onChange={(e) => setTechDetails((p) => ({ ...p, freiosTraseiros: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -723,7 +707,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-susp-d">Suspensão dianteira</Label>
                   <Input
                     id="tech-susp-d"
-                    required
                     value={techDetails.suspensaoDianteira}
                     onChange={(e) => setTechDetails((p) => ({ ...p, suspensaoDianteira: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -734,7 +717,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-susp-t">Suspensão traseira</Label>
                   <Input
                     id="tech-susp-t"
-                    required
                     value={techDetails.suspensaoTraseira}
                     onChange={(e) => setTechDetails((p) => ({ ...p, suspensaoTraseira: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -745,7 +727,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-pneus">Medida dos pneus</Label>
                   <Input
                     id="tech-pneus"
-                    required
                     value={techDetails.medidaPneus}
                     onChange={(e) => setTechDetails((p) => ({ ...p, medidaPneus: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -756,7 +737,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-estepe">Estepe</Label>
                   <Input
                     id="tech-estepe"
-                    required
                     value={techDetails.estepe}
                     onChange={(e) => setTechDetails((p) => ({ ...p, estepe: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -767,7 +747,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-airbags">Airbags</Label>
                   <Input
                     id="tech-airbags"
-                    required
                     value={techDetails.airbags}
                     onChange={(e) => setTechDetails((p) => ({ ...p, airbags: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -778,7 +757,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-abs">ABS e distribuição eletrônica</Label>
                   <Input
                     id="tech-abs"
-                    required
                     value={techDetails.absDistribuicao}
                     onChange={(e) => setTechDetails((p) => ({ ...p, absDistribuicao: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -789,7 +767,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-estab">Controle de estabilidade e tração</Label>
                   <Input
                     id="tech-estab"
-                    required
                     value={techDetails.controleEstabilidadeTracao}
                     onChange={(e) =>
                       setTechDetails((p) => ({ ...p, controleEstabilidadeTracao: e.target.value }))
@@ -802,7 +779,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-rampa">Assistente de partida em rampa</Label>
                   <Input
                     id="tech-rampa"
-                    required
                     value={techDetails.assistentePartidaRampa}
                     onChange={(e) =>
                       setTechDetails((p) => ({ ...p, assistentePartidaRampa: e.target.value }))
@@ -815,7 +791,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-camera">Câmera / sensores de estacionamento</Label>
                   <Input
                     id="tech-camera"
-                    required
                     value={techDetails.cameraSensores}
                     onChange={(e) => setTechDetails((p) => ({ ...p, cameraSensores: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -826,7 +801,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-ar">Ar-condicionado / climatizador</Label>
                   <Input
                     id="tech-ar"
-                    required
                     value={techDetails.arCondicionadoClimatizador}
                     onChange={(e) =>
                       setTechDetails((p) => ({ ...p, arCondicionadoClimatizador: e.target.value }))
@@ -839,7 +813,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-direcao">Direção</Label>
                   <Input
                     id="tech-direcao"
-                    required
                     value={techDetails.direcao}
                     onChange={(e) => setTechDetails((p) => ({ ...p, direcao: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -850,7 +823,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-bancos">Bancos e volante</Label>
                   <Input
                     id="tech-bancos"
-                    required
                     value={techDetails.bancosVolante}
                     onChange={(e) => setTechDetails((p) => ({ ...p, bancosVolante: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -861,7 +833,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-multimidia">Multimídia e conectividade</Label>
                   <Input
                     id="tech-multimidia"
-                    required
                     value={techDetails.multimidiaConectividade}
                     onChange={(e) =>
                       setTechDetails((p) => ({ ...p, multimidiaConectividade: e.target.value }))
@@ -874,7 +845,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-rodas">Rodas e iluminação</Label>
                   <Input
                     id="tech-rodas"
-                    required
                     value={techDetails.rodasIluminacao}
                     onChange={(e) => setTechDetails((p) => ({ ...p, rodasIluminacao: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -885,7 +855,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-vidros">Vidros e travas</Label>
                   <Input
                     id="tech-vidros"
-                    required
                     value={techDetails.vidrosTravas}
                     onChange={(e) => setTechDetails((p) => ({ ...p, vidrosTravas: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -896,7 +865,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-procedencia">Procedência NuLances</Label>
                   <Input
                     id="tech-procedencia"
-                    required
                     value={techDetails.procedenciaNuLances}
                     onChange={(e) => setTechDetails((p) => ({ ...p, procedenciaNuLances: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -907,7 +875,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-licenciamento">Licenciamento e débitos</Label>
                   <Input
                     id="tech-licenciamento"
-                    required
                     value={techDetails.licenciamentoDebitos}
                     onChange={(e) =>
                       setTechDetails((p) => ({ ...p, licenciamentoDebitos: e.target.value }))
@@ -920,7 +887,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-restricoes">Restrições / gravame</Label>
                   <Input
                     id="tech-restricoes"
-                    required
                     value={techDetails.restricoesGravame}
                     onChange={(e) => setTechDetails((p) => ({ ...p, restricoesGravame: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -931,7 +897,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-chaves">Chaves e manual</Label>
                   <Input
                     id="tech-chaves"
-                    required
                     value={techDetails.chavesManual}
                     onChange={(e) => setTechDetails((p) => ({ ...p, chavesManual: e.target.value }))}
                     className="mt-1 rounded-2xl"
@@ -942,7 +907,6 @@ export function MarketplaceAnuncioEditSheet({ open, anuncio, onClose, onSave }: 
                   <Label htmlFor="tech-laudo">Laudo cautelar / inspeção</Label>
                   <Input
                     id="tech-laudo"
-                    required
                     value={techDetails.laudoCautelarInspecao}
                     onChange={(e) =>
                       setTechDetails((p) => ({ ...p, laudoCautelarInspecao: e.target.value }))
