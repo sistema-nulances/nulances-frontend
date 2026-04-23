@@ -565,21 +565,10 @@ export default function LeiloesGanhosPage() {
                               variant="outline"
                               className="h-11 justify-start gap-2 border-zinc-200 text-zinc-700"
                               onClick={() => {
-                                const email = g.contato?.email?.trim();
-                                const telefone = g.contato?.telefone?.trim();
-                                if (email) {
-                                  window.location.href = `mailto:${email}`;
-                                  return;
-                                }
-                                if (telefone) {
-                                  window.location.href = `tel:${telefone}`;
-                                  return;
-                                }
-                                toast({
-                                  type: "info",
-                                  title: "Contato indisponível",
-                                  description: "Este lote não possui um canal de contato no momento.",
-                                });
+                                const loteCodigo = g.lote.replace(/^lote\s*/i, "").trim() || g.lote;
+                                const mensagem = `Sou o ganhador do bem ${g.veiculo} do lote ${loteCodigo} e ${g.titulo}`;
+                                const url = `https://wa.me/553196251800?text=${encodeURIComponent(mensagem)}`;
+                                window.open(url, "_blank", "noopener,noreferrer");
                               }}
                             >
                               <HugeiconsIcon icon={Mail01Icon} size={18} />
