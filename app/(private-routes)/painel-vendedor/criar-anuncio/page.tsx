@@ -254,6 +254,7 @@ export default function SellerCriarAnuncioPage() {
 
       setUploadStatus("Salvando anúncio...");
       await criarAnuncioVendedor({
+        categoria: "COMERCIO",
         marca: marca.trim(),
         modelo: modelo.trim(),
         preco: precoNumber,

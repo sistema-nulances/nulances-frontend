@@ -26,6 +26,8 @@ function categoryMeta(categoria: MarketplaceItem["categoria"]) {
       return { label: "Motos", icon: Motorbike01FreeIcons };
     case "caminhoes":
       return { label: "Caminhões", icon: TruckIcon };
+    default:
+      return { label: formatEnumDisplayLabel(String(categoria ?? "Categoria")), icon: Car03Icon };
   }
 }
 

@@ -31,6 +31,7 @@ export type AnuncioMidiaAdminListResponse = {
 
 export type AnuncioAdminListResponse = {
   id: string;
+  categoria?: string | null;
   modelo?: string | null;
   marcaVeiculo?: string | null;
   valor?: number | null;

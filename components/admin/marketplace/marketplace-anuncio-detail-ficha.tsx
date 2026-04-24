@@ -37,7 +37,19 @@ type Props = {
   anuncio: MarketplaceAnuncioAdmin;
 };
 
+function isCategoriaVeiculo(categoria?: string): boolean {
+  const c = String(categoria ?? "").trim().toUpperCase();
+  return c === "" || c === "VEICULOS" || c === "AUTOMOVEIS";
+}
+
+function categoriaLabel(categoria?: string): string {
+  const c = String(categoria ?? "").trim();
+  if (!c) return "Veículos";
+  return c.toLowerCase().replaceAll("_", " ").replace(/\b\w/g, (m) => m.toUpperCase());
+}
+
 export function MarketplaceAnuncioDetailFicha({ anuncio: a }: Props) {
+  const categoriaVeiculo = isCategoriaVeiculo(a.categoria);
   const { fab, mod } = parseAnoFabMod(a.ano);
   const categoria = categoriaVeiculoDisplay(a);
   const hibrido = isCombustivelHibridoOuEletrico(a.combustivel === "—" ? "" : a.combustivel);
@@ -125,24 +137,24 @@ export function MarketplaceAnuncioDetailFicha({ anuncio: a }: Props) {
           <div className="flex items-start gap-3 sm:col-span-2">
             <BemMarcaLogo nome={a.titulo} marca={a.marca} className="[&_svg]:!h-10 [&_svg]:!w-10" />
             <div className="min-w-0">
-              <SpecLabel>Marca</SpecLabel>
-              <SpecValue>{a.marca}</SpecValue>
+              <SpecLabel>{categoriaVeiculo ? "Marca" : "Referência"}</SpecLabel>
+              <SpecValue>{a.marca || "—"}</SpecValue>
             </div>
           </div>
           <FichaField label="Modelo" value={a.modelo} />
-          <FichaField label="Categoria" value={categoria} />
-          <FichaField label="Ano fabricação" value={fab} />
-          <FichaField label="Ano modelo" value={mod} />
-          <FichaField label="Quilometragem declarada" value={km} />
-          <FichaField label="Cor predominante" value={cor} />
-          <FichaField label="Combustível" value={combustivel} />
-          <FichaField label="Câmbio" value={cambio} />
-          <FichaField label="Condição informada" value={a.condicao} />
+          <FichaField label="Categoria" value={categoriaLabel(a.categoria) || categoria} />
+          {categoriaVeiculo ? <FichaField label="Ano fabricação" value={fab} /> : null}
+          {categoriaVeiculo ? <FichaField label="Ano modelo" value={mod} /> : null}
+          {categoriaVeiculo ? <FichaField label="Quilometragem declarada" value={km} /> : null}
+          {categoriaVeiculo ? <FichaField label="Cor predominante" value={cor} /> : null}
+          {categoriaVeiculo ? <FichaField label="Combustível" value={combustivel} /> : null}
+          {categoriaVeiculo ? <FichaField label="Câmbio" value={cambio} /> : null}
+          {categoriaVeiculo ? <FichaField label="Condição informada" value={a.condicao} /> : null}
           <FichaField label="Localização do anúncio" value={a.local} />
         </div>
       </section>
 
-      <Accordion className="border-t border-zinc-100 pt-2">
+      {categoriaVeiculo ? <Accordion className="border-t border-zinc-100 pt-2">
         <AccordionItem variant="plain" title="Motor, performance e transmissão">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FichaField label="Motorização" value={tech?.motorizacao || motorizacao} />
@@ -305,7 +317,7 @@ export function MarketplaceAnuncioDetailFicha({ anuncio: a }: Props) {
             />
           </div>
         </AccordionItem>
-      </Accordion>
+      </Accordion> : null}
 
       {/* Descrição */}
       <section className="border-t border-zinc-100 pt-8">

@@ -16,6 +16,8 @@ export async function listarAnunciosPublicos(
   const qs = new URLSearchParams();
   const busca = params?.busca?.trim();
   if (busca) qs.set("busca", busca);
+  const categoria = params?.categoria?.trim();
+  if (categoria) qs.set("categoria", categoria);
   qs.set("page", String(params?.page ?? 0));
   qs.set("size", String(params?.size ?? 24));
 

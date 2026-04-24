@@ -50,6 +50,7 @@ export type MarketplaceAnuncioTechDetails = {
 
 export type MarketplaceAnuncioAdmin = Omit<MarketplaceItem, "id"> & {
   id: number | string;
+  categoria?: string;
   vendedor: string;
   /** ISO 8601 */
   publicadoEm: string;

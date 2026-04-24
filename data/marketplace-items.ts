@@ -1,6 +1,6 @@
 import type { BemCondicao } from "@/data/bem-veiculo-options";
 
-export type MarketplaceCategory = "carros" | "motos" | "caminhoes";
+export type MarketplaceCategory = string;
 
 /** Aba de categoria na UI (`"todos"` = sem filtro por tipo). */
 export type MarketplaceCategoryFilter = MarketplaceCategory | "todos";

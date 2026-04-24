@@ -470,8 +470,8 @@ function mapAnuncioResponseToRow(response: AnuncioResponse): MarketplaceAnuncioA
 
   return {
     id: String(response.id ?? ""),
+    categoria: String(response.categoria ?? "").trim() || "VEICULOS",
     leilaoId: 0,
-    categoria: "carros",
     status: statusModeracao === "aprovado" ? "ABERTO" : "EM_BREVE",
     titulo: titulo || "Anúncio",
     condicao: labelCondicaoForSheet(response.condicao) as MarketplaceAnuncioAdmin["condicao"],
@@ -639,8 +639,8 @@ function mapSellerApiToRow(item: AnuncioVendedorListResponse): MarketplaceAnunci
 
   return {
     id: String(item.id ?? ""),
+    categoria: String(item.categoria ?? "").trim() || "VEICULOS",
     leilaoId: 0,
-    categoria: "carros",
     status: statusModeracao === "aprovado" ? "ABERTO" : "EM_BREVE",
     titulo: titulo || "Anúncio",
     condicao: "Pequena monta",
@@ -690,8 +690,8 @@ function mapAdminApiToRow(item: AnuncioAdminListResponse): MarketplaceAnuncioAdm
 
   return {
     id: String(item.id ?? ""),
+    categoria: String(item.categoria ?? "").trim() || "VEICULOS",
     leilaoId: 0,
-    categoria: "carros",
     status: statusModeracao === "aprovado" ? "ABERTO" : "EM_BREVE",
     titulo: titulo || "Anúncio",
     condicao: "Pequena monta",

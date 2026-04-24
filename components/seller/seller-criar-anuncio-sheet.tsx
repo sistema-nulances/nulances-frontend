@@ -23,13 +23,33 @@ import {
 import { ApiError } from "@/lib/repositories/types/auth.types";
 import type {
   AnuncioDetalheTecnicoRequest,
-  CambioVeiculoApi,
-  CombustivelVeiculoApi,
-  CondicaoAnuncioVeiculoApi,
+  CategoriaAnuncioApi,
   CriarAnuncioRequest,
   TipoMidiaAnuncioApi,
-  TipoVeiculoAnuncioApi,
 } from "@/lib/repositories/types/seller-anuncio.types";
+
+const CATEGORIA_OPTIONS: SelectOption[] = [
+  { value: "IMOVEIS", label: "Imóveis" },
+  { value: "CELULARES_E_TELEFONIA", label: "Celulares e telefonia" },
+  { value: "CASA_DECORACAO_E_UTENSILIOS", label: "Casa, decoração e utensílios" },
+  { value: "ESPORTES_E_FITNESS", label: "Esportes e fitness" },
+  { value: "SERVICOS", label: "Serviços" },
+  { value: "MODA_E_BELEZA", label: "Moda e beleza" },
+  { value: "ARTIGOS_INFANTIS", label: "Artigos infantis" },
+  { value: "ANIMAIS_DE_ESTIMACAO", label: "Animais de estimação" },
+  { value: "MUSICA_E_HOBBIES", label: "Música e hobbies" },
+  { value: "AGRO_E_INDUSTRIA", label: "Agro e indústria" },
+  { value: "VAGAS_DE_EMPREGO", label: "Vagas de emprego" },
+  { value: "COMERCIO", label: "Comércio" },
+  { value: "GAMES", label: "Games" },
+  { value: "TVS_E_VIDEO", label: "TVs e vídeo" },
+  { value: "AUDIO", label: "Áudio" },
+  { value: "INFORMATICA", label: "Informática" },
+  { value: "ELETRO", label: "Eletro" },
+  { value: "MOVEIS", label: "Móveis" },
+  { value: "MATERIAIS_DE_CONSTRUCAO", label: "Materiais de construção" },
+  { value: "ESCRITORIO_E_HOME_OFFICE", label: "Escritório e home office" },
+];
 
 const TIPO_OPTIONS: SelectOption[] = [
   { value: "CARRO", label: "Carro" },
@@ -200,6 +220,7 @@ type Props = {
 export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
   const { toast } = useToast();
 
+  const [categoria, setCategoria] = React.useState("");
   const [marca, setMarca] = React.useState("");
   const [modelo, setModelo] = React.useState("");
   const [precoDigits, setPrecoDigits] = React.useState("");
@@ -224,6 +245,7 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
   const videoInputRef = React.useRef<HTMLInputElement>(null);
 
   const resetForm = React.useCallback(() => {
+    setCategoria("");
     setMarca("");
     setModelo("");
     setPrecoDigits("");
@@ -253,13 +275,6 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
     }
   }, [open, resetForm]);
 
-  const detalheTecnicoPayload = React.useMemo<AnuncioDetalheTecnicoRequest>(
-    () =>
-      Object.fromEntries(
-        Object.entries(detalheTecnico).map(([key, value]) => [key, (value ?? "").trim()])
-      ) as AnuncioDetalheTecnicoRequest,
-    [detalheTecnico]
-  );
   const marcaNomeExibicao = React.useMemo(() => {
     const label = marcaVeiculoLabel(marca.trim()) || "Veículo";
     const modeloLimpo = modelo.trim();
@@ -269,18 +284,14 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
 
   const canSubmit = React.useMemo(
     () =>
+      categoria &&
       marca.trim() &&
       modelo.trim() &&
       precoDigits &&
       cidade.trim() &&
-      tipo &&
-      condicao &&
-      ano.replace(/\D/g, "").length >= 4 &&
-      combustivel &&
-      cambio &&
       descricao.trim() &&
       midiaFiles.length > 0,
-    [ano, cambio, cidade, combustivel, condicao, descricao, marca, midiaFiles.length, modelo, precoDigits, tipo]
+    [categoria, cidade, descricao, marca, midiaFiles.length, modelo, precoDigits]
   );
   const midiaPreviewUrls = React.useMemo(
     () => midiaFiles.map((file) => URL.createObjectURL(file)),
@@ -318,20 +329,8 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
     if (!canSubmit) return;
 
     const precoNumber = Number(precoDigits) / 100;
-    const anoDigits = ano.replace(/\D/g, "");
-    const anoNumber = Number(anoDigits.slice(0, 4));
-    const quilometragemNumber = quilometragemDigits ? Number(quilometragemDigits) : undefined;
-
     if (!Number.isFinite(precoNumber) || precoNumber <= 0) {
       toast({ type: "warning", title: "Preço inválido", description: "Informe um preço maior que zero." });
-      return;
-    }
-    if (!Number.isFinite(anoNumber) || anoNumber <= 1900) {
-      toast({ type: "warning", title: "Ano inválido", description: "Informe um ano válido." });
-      return;
-    }
-    if (quilometragemNumber !== undefined && (!Number.isFinite(quilometragemNumber) || quilometragemNumber < 0)) {
-      toast({ type: "warning", title: "Quilometragem inválida", description: "Informe um valor válido." });
       return;
     }
 
@@ -365,25 +364,16 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
       }
 
       setUploadStatus("Salvando anúncio...");
-      await criarAnuncioVendedor({
+      const payload: CriarAnuncioRequest = {
+        categoria: categoria as CategoriaAnuncioApi,
         marca: marca.trim(),
         modelo: modelo.trim(),
         preco: precoNumber,
         cidade: cidade.trim(),
-        tipo: tipo as TipoVeiculoAnuncioApi,
-        condicao: condicao as CondicaoAnuncioVeiculoApi,
-        ano: anoNumber,
-        quilometragem: quilometragemNumber,
-        combustivel: combustivel as CombustivelVeiculoApi,
-        cambio: cambio as CambioVeiculoApi,
-        finalChassi: finalChassi.trim() || undefined,
-        cor: cor.trim() || undefined,
-        blindado,
-        placaVeiculo: placaVeiculo.trim() || undefined,
         descricao: descricao.trim(),
-        detalheTecnico: detalheTecnicoPayload,
         midias,
-      });
+      };
+      await criarAnuncioVendedor(payload);
 
       toast({
         type: "success",
@@ -419,7 +409,22 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
             <div className="sm:col-span-2 flex flex-col gap-3 sm:flex-row sm:items-start">
               <BemMarcaLogo nome={marcaNomeExibicao} marca={marca} className="sm:pt-1" />
               <div className="min-w-0 flex-1">
-                <LabelObrigatoria htmlFor="sheet-marca">Marca do veículo</LabelObrigatoria>
+                <LabelObrigatoria htmlFor="sheet-categoria">Categoria</LabelObrigatoria>
+                <Select
+                  id="sheet-categoria"
+                  value={categoria}
+                  onValueChange={setCategoria}
+                  options={CATEGORIA_OPTIONS}
+                  placeholder="Selecione a categoria"
+                  className="mt-1.5"
+                />
+              </div>
+            </div>
+
+            <div className="sm:col-span-2 flex flex-col gap-3 sm:flex-row sm:items-start">
+              <BemMarcaLogo nome={marcaNomeExibicao} marca={marca} className="sm:pt-1" />
+              <div className="min-w-0 flex-1">
+                <LabelObrigatoria htmlFor="sheet-marca">Marca</LabelObrigatoria>
                 <SelectSearch
                   id="sheet-marca"
                   value={marca}
@@ -477,7 +482,7 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
               />
             </div>
             <div>
-              <LabelObrigatoria htmlFor="sheet-ano">Ano</LabelObrigatoria>
+              <Label htmlFor="sheet-ano">Ano</Label>
               <Input
                 id="sheet-ano"
                 value={ano}
@@ -486,12 +491,11 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
                 maxLength={9}
                 className="mt-1.5"
                 placeholder="Ex.: 2022/2023"
-                required
               />
             </div>
 
             <div>
-              <LabelObrigatoria htmlFor="sheet-tipo">Tipo</LabelObrigatoria>
+              <Label htmlFor="sheet-tipo">Tipo</Label>
               <Select
                 id="sheet-tipo"
                 value={tipo}
@@ -502,7 +506,7 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
               />
             </div>
             <div>
-              <LabelObrigatoria htmlFor="sheet-condicao">Condição</LabelObrigatoria>
+              <Label htmlFor="sheet-condicao">Condição</Label>
               <Select
                 id="sheet-condicao"
                 value={condicao}
@@ -513,7 +517,7 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
               />
             </div>
             <div>
-              <LabelObrigatoria htmlFor="sheet-comb">Combustível</LabelObrigatoria>
+              <Label htmlFor="sheet-comb">Combustível</Label>
               <Select
                 id="sheet-comb"
                 value={combustivel}
@@ -524,7 +528,7 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
               />
             </div>
             <div>
-              <LabelObrigatoria htmlFor="sheet-cambio">Câmbio</LabelObrigatoria>
+              <Label htmlFor="sheet-cambio">Câmbio</Label>
               <Select
                 id="sheet-cambio"
                 value={cambio}
@@ -545,7 +549,7 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
                 placeholder="Ex.: 48.320"
               />
             </div>
-            <div className="sm:col-span-2">
+            <div className="sm:col-span-2 hidden">
               <Label htmlFor="sheet-placa">Placa</Label>
               <Input
                 id="sheet-placa"
@@ -609,7 +613,7 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
               </p>
             </div>
 
-            {DETALHE_FIELDS.map((field) => (
+            {false && DETALHE_FIELDS.map((field) => (
               <div key={field.key} className={field.rows ? "sm:col-span-2" : undefined}>
                 <Label htmlFor={`sheet-tech-${field.key}`}>{field.label}</Label>
                 {field.rows ? (
@@ -646,7 +650,7 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
               </div>
             ))}
 
-            <label className="sm:col-span-2 inline-flex items-center gap-2 text-sm text-zinc-700">
+            <label className="sm:col-span-2 hidden items-center gap-2 text-sm text-zinc-700">
               <input type="checkbox" checked={blindado} onChange={(e) => setBlindado(e.target.checked)} className="h-4 w-4 rounded border-zinc-300" />
               Veículo blindado
             </label>

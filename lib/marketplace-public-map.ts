@@ -85,6 +85,12 @@ function tipoVeiculoToCategoria(tipo: string | null | undefined): MarketplaceCat
   return "carros";
 }
 
+function normalizeCategoria(categoria: string | null | undefined, tipoVeiculo: string | null | undefined): MarketplaceCategory {
+  const c = String(categoria ?? "").trim();
+  if (c) return c;
+  return tipoVeiculoToCategoria(tipoVeiculo);
+}
+
 function formatKm(km: number | null | undefined): string {
   if (km == null || !Number.isFinite(km) || km < 0) return "—";
   return `${km.toLocaleString("pt-BR")} km`;
@@ -114,7 +120,7 @@ export function mapAnuncioPublicoListToMarketplaceItem(
   return {
     id: String(row.id ?? ""),
     leilaoId: 0,
-    categoria: tipoVeiculoToCategoria(row.tipoVeiculo),
+    categoria: normalizeCategoria(row.categoria, row.tipoVeiculo),
     status: "ABERTO",
     titulo,
     condicao: condicaoLabel as MarketplaceItem["condicao"],
@@ -146,7 +152,7 @@ export function mapAnuncioPublicoDetalheToMarketplaceItem(
   return {
     id: String(row.id ?? ""),
     leilaoId: 0,
-    categoria: tipoVeiculoToCategoria(row.tipoVeiculo),
+    categoria: normalizeCategoria(row.categoria, row.tipoVeiculo),
     status: "ABERTO",
     titulo,
     condicao: condicaoLabel as MarketplaceItem["condicao"],

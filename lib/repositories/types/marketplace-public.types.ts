@@ -1,6 +1,7 @@
 export type ListarAnunciosPublicosRequest = {
   /** Filtro por modelo (backend). */
   busca?: string;
+  categoria?: string;
   page?: number;
   size?: number;
 };
@@ -14,6 +15,7 @@ export type AnuncioPublicoMidiaResponse = {
 
 export type AnuncioPublicoListResponse = {
   id: string;
+  categoria?: string | null;
   modelo?: string | null;
   marcaVeiculo?: string | null;
   preco?: number | null;
@@ -77,6 +79,7 @@ export type AnuncioPublicoDetalheTecnicoResponse = {
 
 export type AnuncioPublicoDetalheResponse = {
   id: string;
+  categoria?: string | null;
   marcaVeiculo?: string | null;
   modelo?: string | null;
   preco?: number | null;

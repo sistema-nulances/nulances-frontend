@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { FilterHorizontalIcon } from "@hugeicons/core-free-icons";
-import { Car03Icon, Motorbike01FreeIcons, TruckIcon, Menu01Icon } from "@hugeicons/core-free-icons";
+import { Menu01Icon } from "@hugeicons/core-free-icons";
 import type { MarketplaceCategoryFilter, MarketplaceCondicao, MarketplaceStatus } from "@/data/marketplace-items";
 import { Badge } from "@/components/ui/badge";
 
@@ -102,7 +102,7 @@ function MarketplaceFilterForm({
 
       <Separator className="bg-zinc-100" />
 
-      <div>
+      <div className="hidden">
         <h3 className="mb-4 text-[15px] font-semibold tracking-[-0.02em] text-zinc-900">Status do Anúncio</h3>
         <div className="flex flex-wrap gap-2">
           {(
@@ -137,7 +137,7 @@ function MarketplaceFilterForm({
 
       <Separator className="bg-zinc-100" />
 
-      <div>
+      <div className="hidden">
         <h3 className="mb-4 text-[15px] font-semibold tracking-[-0.02em] text-zinc-900">Combustível</h3>
         <div className="flex flex-wrap gap-2">
           {["Flex", "Diesel", "Gasolina", "Etanol", "Elétrico", "Híbrido"].map((item) => {
@@ -166,7 +166,7 @@ function MarketplaceFilterForm({
 
       <Separator className="bg-zinc-100" />
 
-      <div>
+      <div className="hidden">
         <h3 className="mb-4 text-[15px] font-semibold tracking-[-0.02em] text-zinc-900">Câmbio</h3>
         <div className="flex flex-wrap gap-2">
           {["Automático", "Manual", "CVT", "Automatizado"].map((item) => {
@@ -195,7 +195,7 @@ function MarketplaceFilterForm({
 
       <Separator className="bg-zinc-100" />
 
-      <div>
+      <div className="hidden">
         <h3 className="mb-4 text-[15px] font-semibold tracking-[-0.02em] text-zinc-900">Condição</h3>
         <div className="flex flex-wrap gap-2">
           {["Pequena monta", "Média monta", "Grande monta"].map((item) => {
@@ -299,9 +299,26 @@ export function MarketplaceFiltersTabs({
 
   const categoryOptions: CategoryOpt[] = [
     { value: "todos", label: "Todos", icon: Menu01Icon },
-    { value: "carros", label: "Carros", icon: Car03Icon },
-    { value: "motos", label: "Motos", icon: Motorbike01FreeIcons },
-    { value: "caminhoes", label: "Caminhões", icon: TruckIcon },
+    { value: "IMOVEIS", label: "Imóveis", icon: Menu01Icon },
+    { value: "CELULARES_E_TELEFONIA", label: "Celulares e telefonia", icon: Menu01Icon },
+    { value: "CASA_DECORACAO_E_UTENSILIOS", label: "Casa, decoração e utensílios", icon: Menu01Icon },
+    { value: "ESPORTES_E_FITNESS", label: "Esportes e fitness", icon: Menu01Icon },
+    { value: "SERVICOS", label: "Serviços", icon: Menu01Icon },
+    { value: "MODA_E_BELEZA", label: "Moda e beleza", icon: Menu01Icon },
+    { value: "ARTIGOS_INFANTIS", label: "Artigos infantis", icon: Menu01Icon },
+    { value: "ANIMAIS_DE_ESTIMACAO", label: "Animais de estimação", icon: Menu01Icon },
+    { value: "MUSICA_E_HOBBIES", label: "Música e hobbies", icon: Menu01Icon },
+    { value: "AGRO_E_INDUSTRIA", label: "Agro e indústria", icon: Menu01Icon },
+    { value: "VAGAS_DE_EMPREGO", label: "Vagas de emprego", icon: Menu01Icon },
+    { value: "COMERCIO", label: "Comércio", icon: Menu01Icon },
+    { value: "GAMES", label: "Games", icon: Menu01Icon },
+    { value: "TVS_E_VIDEO", label: "TVs e vídeo", icon: Menu01Icon },
+    { value: "AUDIO", label: "Áudio", icon: Menu01Icon },
+    { value: "INFORMATICA", label: "Informática", icon: Menu01Icon },
+    { value: "ELETRO", label: "Eletro", icon: Menu01Icon },
+    { value: "MOVEIS", label: "Móveis", icon: Menu01Icon },
+    { value: "MATERIAIS_DE_CONSTRUCAO", label: "Materiais de construção", icon: Menu01Icon },
+    { value: "ESCRITORIO_E_HOME_OFFICE", label: "Escritório e home office", icon: Menu01Icon },
   ];
 
   const formProps = {
@@ -363,7 +380,7 @@ export function MarketplaceFiltersTabs({
         open={isFilterOpen && isMobile}
         onClose={() => setIsFilterOpen(false)}
         title="Filtros"
-        description="Refine sua busca para encontrar os melhores veículos."
+        description="Refine sua busca por categoria."
         footer={footer}
       >
         <MarketplaceFilterForm {...formProps} Separator={PlainFilterSep} />
@@ -374,7 +391,7 @@ export function MarketplaceFiltersTabs({
           <SheetHeader className="px-6 pt-6 pb-2">
             <SheetTitle className="text-2xl font-bold text-zinc-900">Filtros</SheetTitle>
             <SheetDescription className="text-base text-zinc-500">
-              Refine sua busca para encontrar os melhores veículos.
+              Refine sua busca por categoria.
             </SheetDescription>
           </SheetHeader>
 

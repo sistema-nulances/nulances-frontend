@@ -1,5 +1,27 @@
 export type TipoMidiaAnuncioApi = "FOTO" | "VIDEO";
 
+export type CategoriaAnuncioApi =
+  | "IMOVEIS"
+  | "CELULARES_E_TELEFONIA"
+  | "CASA_DECORACAO_E_UTENSILIOS"
+  | "ESPORTES_E_FITNESS"
+  | "SERVICOS"
+  | "MODA_E_BELEZA"
+  | "ARTIGOS_INFANTIS"
+  | "ANIMAIS_DE_ESTIMACAO"
+  | "MUSICA_E_HOBBIES"
+  | "AGRO_E_INDUSTRIA"
+  | "VAGAS_DE_EMPREGO"
+  | "COMERCIO"
+  | "GAMES"
+  | "TVS_E_VIDEO"
+  | "AUDIO"
+  | "INFORMATICA"
+  | "ELETRO"
+  | "MOVEIS"
+  | "MATERIAIS_DE_CONSTRUCAO"
+  | "ESCRITORIO_E_HOME_OFFICE";
+
 export type TipoVeiculoAnuncioApi =
   | "CARRO"
   | "MOTO"
@@ -88,16 +110,17 @@ export type EditarAnuncioDetalheTecnicoRequest = Partial<{
 }>;
 
 export type CriarAnuncioRequest = {
+  categoria: CategoriaAnuncioApi;
   marca: string;
   modelo: string;
   preco: number;
   cidade: string;
-  tipo: TipoVeiculoAnuncioApi;
-  condicao: CondicaoAnuncioVeiculoApi;
-  ano: number;
+  tipo?: TipoVeiculoAnuncioApi;
+  condicao?: CondicaoAnuncioVeiculoApi;
+  ano?: number;
   quilometragem?: number;
-  combustivel: CombustivelVeiculoApi;
-  cambio: CambioVeiculoApi;
+  combustivel?: CombustivelVeiculoApi;
+  cambio?: CambioVeiculoApi;
   finalChassi?: string;
   cor?: string;
   blindado?: boolean;
@@ -108,6 +131,7 @@ export type CriarAnuncioRequest = {
 };
 
 export type EditarAnuncioRequest = {
+  categoria?: CategoriaAnuncioApi;
   marca?: string;
   modelo?: string;
   preco?: number;
@@ -180,6 +204,7 @@ export type AnuncioResponse = {
   id: string;
   vendedorId: string;
   vendedorNome: string;
+  categoria?: CategoriaAnuncioApi | null;
   marcaId?: string;
   marca: string;
   modelo: string;
@@ -233,6 +258,7 @@ export type AnuncioMidiaListResponse = {
 
 export type AnuncioVendedorListResponse = {
   id: string;
+  categoria?: CategoriaAnuncioApi | null;
   modelo?: string | null;
   marcaVeiculo?: string | null;
   quandoFoiPostado?: string | null;
