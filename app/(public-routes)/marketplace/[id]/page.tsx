@@ -104,25 +104,25 @@ const FALLBACK_MARKETPLACE_ITEM: MarketplaceItem = {
 
 type MarketplaceDetailItem = MarketplaceItem & { imagens?: string[]; midias?: MarketplaceRenderableMedia[] };
 
-/** Três URLs exibidas lado a lado; `start` é o índice da foto mais à esquerda (para badge e lightbox). */
-function getCarouselTriplet(urls: string[], start: number): { triplet: string[]; startClamped: number; maxStart: number } {
-  const n = urls.length;
+/** Três mídias exibidas lado a lado; `start` é o índice da mídia mais à esquerda. */
+function getCarouselTriplet<T>(items: T[], start: number): { triplet: T[]; startClamped: number; maxStart: number } {
+  const n = items.length;
   if (n === 0) {
     return { triplet: [], startClamped: 0, maxStart: 0 };
   }
   if (n === 1) {
-    return { triplet: [urls[0], urls[0], urls[0]], startClamped: 0, maxStart: 0 };
+    return { triplet: [items[0], items[0], items[0]], startClamped: 0, maxStart: 0 };
   }
   if (n === 2) {
     const maxStart = 1;
     const s = Math.max(0, Math.min(start, maxStart));
-    const at = (k: number) => urls[(s + k) % 2];
+    const at = (k: number) => items[(s + k) % 2];
     return { triplet: [at(0), at(1), at(2)], startClamped: s, maxStart };
   }
   const maxStart = n - VISIBLE_SLOTS;
   const s = Math.max(0, Math.min(start, maxStart));
   return {
-    triplet: [urls[s], urls[s + 1], urls[s + 2]],
+    triplet: [items[s], items[s + 1], items[s + 2]],
     startClamped: s,
     maxStart,
   };
@@ -191,7 +191,7 @@ export default function MarketplaceAdDetailPage() {
   );
   const totalPhotos = galleryMedias.length;
   const { triplet, startClamped: safeCarouselStart, maxStart: carouselMaxStart } = React.useMemo(
-    () => getCarouselTriplet(galleryMedias.map((media) => media.url), carouselStart),
+    () => getCarouselTriplet(galleryMedias, carouselStart),
     [galleryMedias, carouselStart],
   );
 
@@ -286,14 +286,14 @@ export default function MarketplaceAdDetailPage() {
         <section className="relative w-full overflow-hidden bg-white">
           <div className="relative flex h-[240px] w-full min-w-0 md:h-[520px]">
             {totalPhotos > 0 ? (
-              triplet.map((src, i) => (
+              triplet.map((media, i) => (
                 <div
                   key={`${safeCarouselStart}-${i}`}
                   className="relative h-full min-w-0 flex-1 border-r border-white last:border-r-0"
                 >
-                  {galleryMedias[safeCarouselStart + i]?.tipo === "VIDEO" ? (
+                  {media.tipo === "VIDEO" ? (
                     <video
-                      src={src}
+                      src={media.url}
                       className="h-full w-full object-cover"
                       controls
                       preload="metadata"
@@ -302,7 +302,7 @@ export default function MarketplaceAdDetailPage() {
                     />
                   ) : (
                     <Image
-                      src={src}
+                      src={media.url}
                       alt={`${marketplaceItem.titulo} - foto ${safeCarouselStart + i + 1}`}
                       fill
                       className="object-cover"

@@ -113,6 +113,7 @@ function moderacaoBadge(status: AnuncioModeracaoStatus) {
 
 type PhotoCarouselProps = {
   photos: string[];
+  videos?: string[];
   /** Altura da área da foto (Tailwind height class). */
   heightClass?: string;
   className?: string;
@@ -125,8 +126,14 @@ type PhotoCarouselProps = {
   imageAltBase?: string;
 };
 
+type CarouselMedia = {
+  kind: "photo" | "video";
+  url: string;
+};
+
 function PhotoCarousel({
   photos,
+  videos = [],
   heightClass = "h-56 sm:h-64 md:h-72",
   className,
   variant = "default",
@@ -135,11 +142,18 @@ function PhotoCarousel({
   const [index, setIndex] = React.useState(0);
   const [lightboxOpen, setLightboxOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
-  const n = photos.length;
+  const medias = React.useMemo<CarouselMedia[]>(
+    () => [
+      ...photos.map((url) => ({ kind: "photo" as const, url })),
+      ...videos.map((url) => ({ kind: "video" as const, url })),
+    ],
+    [photos, videos]
+  );
+  const n = medias.length;
 
   React.useEffect(() => {
     setIndex(0);
-  }, [photos]);
+  }, [medias]);
 
   React.useEffect(() => {
     setMounted(true);
@@ -188,15 +202,25 @@ function PhotoCarousel({
           variant === "sheetHero" ? "h-[min(44vh,380px)] sm:h-[min(40vh,420px)]" : heightClass
         )}
       >
-        <Image
-          src={photos[index]!}
-          alt={`${imageAltBase} — foto ${index + 1} de ${n}`}
-          fill
-          className="cursor-pointer object-cover object-center"
-          sizes={variant === "sheetHero" ? "(min-width: 768px) 768px, 100vw" : "(min-width: 1280px) 400px, 90vw"}
-          priority={index === 0}
-          onClick={() => setLightboxOpen(true)}
-        />
+        {medias[index]?.kind === "video" ? (
+          <video
+            src={medias[index].url}
+            controls
+            preload="metadata"
+            className="h-full w-full bg-black object-cover object-center"
+            onClick={() => setLightboxOpen(true)}
+          />
+        ) : (
+          <Image
+            src={medias[index]!.url}
+            alt={`${imageAltBase} — mídia ${index + 1} de ${n}`}
+            fill
+            className="cursor-pointer object-cover object-center"
+            sizes={variant === "sheetHero" ? "(min-width: 768px) 768px, 100vw" : "(min-width: 1280px) 400px, 90vw"}
+            priority={index === 0}
+            onClick={() => setLightboxOpen(true)}
+          />
+        )}
       </div>
 
       {n > 1 ? (
@@ -224,11 +248,11 @@ function PhotoCarousel({
             <ChevronRightIcon className="h-5 w-5" />
           </button>
           <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
-            {photos.map((_, i) => (
+            {medias.map((_, i) => (
               <button
                 key={i}
                 type="button"
-                aria-label={`Foto ${i + 1}`}
+                aria-label={`Mídia ${i + 1}`}
                 onClick={() => setIndex(i)}
                 className={cn(
                   "h-1.5 rounded-full transition-all",
@@ -260,14 +284,23 @@ function PhotoCarousel({
                 className="relative z-0 h-[100vh] w-[100vw]"
                 onClick={(e) => e.stopPropagation()}
               >
-                <Image
-                  src={photos[index]!}
-                  alt={`${imageAltBase} — foto ${index + 1} de ${n}`}
-                  fill
-                  className="object-contain object-center"
-                  sizes="100vw"
-                  priority
-                />
+                {medias[index]?.kind === "video" ? (
+                  <video
+                    src={medias[index].url}
+                    controls
+                    autoPlay
+                    className="h-full w-full bg-black object-contain object-center"
+                  />
+                ) : (
+                  <Image
+                    src={medias[index]!.url}
+                    alt={`${imageAltBase} — mídia ${index + 1} de ${n}`}
+                    fill
+                    className="object-contain object-center"
+                    sizes="100vw"
+                    priority
+                  />
+                )}
               </div>
             </div>,
             document.body
@@ -453,7 +486,7 @@ function mapAnuncioResponseToRow(response: AnuncioResponse): MarketplaceAnuncioA
     imagem: fotos[0] ?? MARKETPLACE_IMAGE_FALLBACK,
     vendedor: String(response.vendedorNome ?? "").trim() || "Você",
     publicadoEm,
-    fotos: fotos.length > 0 ? fotos : [MARKETPLACE_IMAGE_FALLBACK],
+    fotos,
     moderacao: statusModeracao,
     descricao: String(response.descricao ?? "").trim() || "",
     tipoVeiculo: labelTipoVeiculoApi(response.tipo) || "Carro",
@@ -622,7 +655,7 @@ function mapSellerApiToRow(item: AnuncioVendedorListResponse): MarketplaceAnunci
     imagem: fotos[0] ?? MARKETPLACE_IMAGE_FALLBACK,
     vendedor: "Você",
     publicadoEm,
-    fotos: fotos.length > 0 ? fotos : [MARKETPLACE_IMAGE_FALLBACK],
+    fotos,
     moderacao: statusModeracao,
     descricao: "",
     tipoVeiculo: "Carro",
@@ -1270,7 +1303,7 @@ export function AdminMarketplaceAnunciosContent({
               key={a.id}
               className="flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm shadow-black/[0.03]"
             >
-              <PhotoCarousel photos={a.fotos} imageAltBase={a.titulo} />
+              <PhotoCarousel photos={a.fotos} videos={a.videoUrls} imageAltBase={a.titulo} />
 
               <div className="flex flex-1 flex-col gap-3 p-4">
                 <div className="flex gap-3">
@@ -1403,13 +1436,8 @@ export function AdminMarketplaceAnunciosContent({
             <>
               <div className="-mx-4 -mt-1">
                 <PhotoCarousel
-                  photos={
-                    detailTarget.fotos.length > 0
-                      ? detailTarget.fotos
-                      : detailTarget.imagem
-                        ? [detailTarget.imagem]
-                        : []
-                  }
+                  photos={detailTarget.fotos}
+                  videos={detailTarget.videoUrls}
                   variant="sheetHero"
                   imageAltBase={detailTarget.titulo}
                 />
