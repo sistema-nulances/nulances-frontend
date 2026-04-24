@@ -223,12 +223,35 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
   const imageInputRef = React.useRef<HTMLInputElement>(null);
   const videoInputRef = React.useRef<HTMLInputElement>(null);
 
+  const resetForm = React.useCallback(() => {
+    setMarca("");
+    setModelo("");
+    setPrecoDigits("");
+    setCidade("");
+    setTipo("");
+    setCondicao("");
+    setAno("");
+    setQuilometragemDigits("");
+    setCombustivel("");
+    setCambio("");
+    setFinalChassi("");
+    setCor("");
+    setBlindado(false);
+    setPlacaVeiculo("");
+    setDescricao("");
+    setDetalheTecnico(EMPTY_DETALHE_TECNICO);
+    setMidiaFiles([]);
+    setUploadStatus(null);
+    setLoading(false);
+    if (imageInputRef.current) imageInputRef.current.value = "";
+    if (videoInputRef.current) videoInputRef.current.value = "";
+  }, []);
+
   React.useEffect(() => {
     if (!open) {
-      setUploadStatus(null);
-      setLoading(false);
+      resetForm();
     }
-  }, [open]);
+  }, [open, resetForm]);
 
   const detalheTecnicoPayload = React.useMemo<AnuncioDetalheTecnicoRequest>(
     () =>
@@ -368,6 +391,7 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
         description: "Seu anúncio foi criado e enviado para análise.",
       });
 
+      resetForm();
       onCreated?.();
       onClose();
     } catch (error) {
@@ -384,7 +408,7 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
 
   return (
     <Sheet open={open} onClose={onClose} side="right">
-      <SheetContent className="max-w-[min(100vw-1rem,840px)] !w-full overflow-y-auto" onClose={onClose}>
+      <SheetContent className="max-w-[min(100vw-1rem,840px)] !w-full" onClose={onClose}>
         <SheetHeader>
           <SheetTitle>Criar anúncio</SheetTitle>
           <SheetDescription>Preencha os dados do veículo e envie as mídias para análise.</SheetDescription>

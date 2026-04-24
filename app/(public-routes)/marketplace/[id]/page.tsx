@@ -83,9 +83,12 @@ function resolveAnoReferencia(anoRaw: string | null | undefined, anoNum: number 
 }
 
 function getWhatsappHref(phoneRaw: string | null | undefined, modelo: string): string | null {
-  const d = digitsOnly(String(phoneRaw ?? ""));
-  if (d.length < 10) return null;
-  const number = d.length <= 11 ? `55${d}` : d;
+  const rawDigits = digitsOnly(String(phoneRaw ?? ""));
+  if (rawDigits.length < 10) return null;
+
+  // Remove prefixo de discagem nacional (0 + operadora), ex.: 0311199999999 -> 11999999999.
+  const digits = rawDigits.startsWith("0") && rawDigits.length > 11 ? rawDigits.slice(3) : rawDigits;
+  const number = digits.startsWith("55") ? digits : `55${digits}`;
   const text = `Quero saber mais sobre o anuncio ${modelo} publicado na NuLances`;
   return `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
 }
@@ -547,7 +550,7 @@ export default function MarketplaceAdDetailPage() {
                         className="inline-flex h-11 items-center gap-2 rounded-full bg-emerald-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
                       >
                         <HugeiconsIcon icon={WhatsappIcon} size={18} />
-                        {seller.telefone ? `Chamar no WhatsApp (${formatPhoneBr(seller.telefone)})` : "Chamar no WhatsApp"}
+                        {seller.telefone ? `Chamar no WhatsApp ${formatPhoneBr(seller.telefone)}` : "Chamar no WhatsApp"}
                       </a>
                     </div>
                   ) : null}
