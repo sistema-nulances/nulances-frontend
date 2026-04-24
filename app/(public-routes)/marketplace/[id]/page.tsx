@@ -382,7 +382,7 @@ export default function MarketplaceAdDetailPage() {
                 </div>
                 <div className="flex items-center gap-2 text-[15px] text-zinc-500">
                   <HugeiconsIcon icon={Location01Icon} size={18} className="shrink-0" />
-                  <span>{marketplaceItem.local}</span>
+                  <span>Onde está a mercadoria: {marketplaceItem.local}</span>
                 </div>
               </header>
 
