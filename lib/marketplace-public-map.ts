@@ -12,6 +12,12 @@ import type {
   AnuncioPublicoMidiaResponse,
 } from "@/lib/repositories/types/marketplace-public.types";
 
+export type MarketplaceRenderableMedia = {
+  tipo: "FOTO" | "VIDEO";
+  url: string;
+  ordem: number;
+};
+
 function isRenderableMediaUrl(value: string | null | undefined): boolean {
   const v = String(value ?? "").trim();
   if (!v) return false;
@@ -27,25 +33,36 @@ function absolutizeMediaUrl(value: string): string {
   return `${base}/${v}`;
 }
 
-export function mapAnuncioPublicoMidiasToUrls(midias: AnuncioPublicoMidiaResponse[] | null | undefined): string[] {
+export function mapAnuncioPublicoMidiasToRenderable(
+  midias: AnuncioPublicoMidiaResponse[] | null | undefined
+): MarketplaceRenderableMedia[] {
   const list = Array.isArray(midias) ? [...midias] : [];
   list.sort((a, b) => (a?.ordem ?? 0) - (b?.ordem ?? 0));
-  const urls: string[] = [];
+  const medias: MarketplaceRenderableMedia[] = [];
   for (const m of list) {
     const tipo = String(m?.tipo ?? "").toUpperCase();
-    if (tipo === "VIDEO") continue;
+    if (tipo !== "FOTO" && tipo !== "VIDEO") continue;
     for (const c of [m?.url, m?.arquivo]) {
       if (isRenderableMediaUrl(c)) {
-        urls.push(absolutizeMediaUrl(String(c).trim()));
+        medias.push({
+          tipo: tipo as MarketplaceRenderableMedia["tipo"],
+          url: absolutizeMediaUrl(String(c).trim()),
+          ordem: Number(m?.ordem ?? medias.length),
+        });
         break;
       }
     }
   }
-  return urls;
+  return medias;
+}
+
+export function mapAnuncioPublicoMidiasToUrls(midias: AnuncioPublicoMidiaResponse[] | null | undefined): string[] {
+  return mapAnuncioPublicoMidiasToRenderable(midias).map((media) => media.url);
 }
 
 function pickCapaImagem(row: AnuncioPublicoListResponse): string | undefined {
-  return mapAnuncioPublicoMidiasToUrls(row.imagens)[0];
+  const medias = mapAnuncioPublicoMidiasToRenderable(row.imagens);
+  return medias.find((media) => media.tipo === "FOTO")?.url ?? medias[0]?.url;
 }
 
 function tipoVeiculoToCategoria(tipo: string | null | undefined): MarketplaceCategory {
@@ -83,13 +100,16 @@ function formatAno(ano: number | null | undefined): string {
   return `${ano}/${ano}`;
 }
 
-export function mapAnuncioPublicoListToMarketplaceItem(row: AnuncioPublicoListResponse): MarketplaceItem {
+export function mapAnuncioPublicoListToMarketplaceItem(
+  row: AnuncioPublicoListResponse
+): MarketplaceItem & { midias?: MarketplaceRenderableMedia[] } {
   const marcaCode = normalizeMarcaVeiculoCode(String(row.marcaVeiculo ?? ""));
   const marca = marcaVeiculoLabel(marcaCode) || String(row.marcaVeiculo ?? "").trim() || "—";
   const modelo = String(row.modelo ?? "").trim() || "—";
   const titulo = [marca, modelo].filter((x) => x && x !== "—").join(" ").trim() || "Anúncio";
   const cidade = String(row.cidade ?? "").trim() || "—";
   const condicaoLabel = labelCondicaoApi(row.condicao) || "Pequena monta";
+  const midias = mapAnuncioPublicoMidiasToRenderable(row.imagens);
 
   return {
     id: String(row.id ?? ""),
@@ -107,18 +127,20 @@ export function mapAnuncioPublicoListToMarketplaceItem(row: AnuncioPublicoListRe
     local: cidade,
     preco: formatPrecoBRL(row.preco == null ? undefined : Number(row.preco)),
     imagem: pickCapaImagem(row),
+    midias,
   };
 }
 
 export function mapAnuncioPublicoDetalheToMarketplaceItem(
   row: AnuncioPublicoDetalheResponse
-): MarketplaceItem & { imagens?: string[] } {
+): MarketplaceItem & { imagens?: string[]; midias?: MarketplaceRenderableMedia[] } {
   const marcaCode = normalizeMarcaVeiculoCode(String(row.marcaVeiculo ?? ""));
   const marca = marcaVeiculoLabel(marcaCode) || String(row.marcaVeiculo ?? "").trim() || "—";
   const modelo = String(row.modelo ?? "").trim() || "—";
   const titulo = [marca, modelo].filter((x) => x && x !== "—").join(" ").trim() || "Anúncio";
   const cidade = String(row.cidade ?? "").trim() || "—";
-  const imagens = mapAnuncioPublicoMidiasToUrls(row.imagens);
+  const medias = mapAnuncioPublicoMidiasToRenderable(row.imagens);
+  const imagens = medias.map((media) => media.url);
   const condicaoLabel = labelCondicaoApi(row.condicao) || "Pequena monta";
 
   return {
@@ -136,7 +158,8 @@ export function mapAnuncioPublicoDetalheToMarketplaceItem(
     combustivel: labelCombustivelApi(row.combustivel) || "—",
     local: cidade,
     preco: formatPrecoBRL(row.preco == null ? undefined : Number(row.preco)),
-    imagem: imagens[0],
+    imagem: medias.find((media) => media.tipo === "FOTO")?.url ?? imagens[0],
     imagens,
+    midias: medias,
   };
 }

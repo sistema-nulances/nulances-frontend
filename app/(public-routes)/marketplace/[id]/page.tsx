@@ -21,6 +21,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import type { MarketplaceItem } from "@/data/marketplace-items";
 import { buildMarketplaceTechSheet, type TechSheetRow } from "@/lib/marketplace-ad-tech-sheet";
+import type { MarketplaceRenderableMedia } from "@/lib/marketplace-public-map";
 import { resolveBemMarcaIconFromMarca } from "@/lib/bem-marca-icon";
 import { Accordion, AccordionItem } from "@/components/ui/accordion";
 import { cn } from "@/lib/cn";
@@ -101,6 +102,8 @@ const FALLBACK_MARKETPLACE_ITEM: MarketplaceItem = {
   preco: "Sob consulta",
 };
 
+type MarketplaceDetailItem = MarketplaceItem & { imagens?: string[]; midias?: MarketplaceRenderableMedia[] };
+
 /** Três URLs exibidas lado a lado; `start` é o índice da foto mais à esquerda (para badge e lightbox). */
 function getCarouselTriplet(urls: string[], start: number): { triplet: string[]; startClamped: number; maxStart: number } {
   const n = urls.length;
@@ -176,17 +179,20 @@ export default function MarketplaceAdDetailPage() {
   const cambioValue = effectiveMarketplaceItem.cambio;
   const combustivelValue = effectiveMarketplaceItem.combustivel;
   const descricao = (detail?.descricao?.trim() || effectiveMarketplaceItem.titulo).trim();
-  const galleryImages = (
-    ((effectiveMarketplaceItem as MarketplaceItem & { imagens?: string[] }).imagens ?? []).length > 0
-      ? (effectiveMarketplaceItem as MarketplaceItem & { imagens?: string[] }).imagens!
-      : effectiveMarketplaceItem.imagem
-        ? [effectiveMarketplaceItem.imagem]
-        : []
+  const detailItem = effectiveMarketplaceItem as MarketplaceDetailItem;
+  const galleryMedias = (
+    (detailItem.midias ?? []).length > 0
+      ? detailItem.midias!
+      : ((detailItem.imagens ?? []).length > 0
+          ? detailItem.imagens!.map((url, idx) => ({ tipo: "FOTO" as const, url, ordem: idx }))
+          : effectiveMarketplaceItem.imagem
+            ? [{ tipo: "FOTO" as const, url: effectiveMarketplaceItem.imagem, ordem: 0 }]
+            : [])
   );
-  const totalPhotos = galleryImages.length;
+  const totalPhotos = galleryMedias.length;
   const { triplet, startClamped: safeCarouselStart, maxStart: carouselMaxStart } = React.useMemo(
-    () => getCarouselTriplet(galleryImages, carouselStart),
-    [galleryImages, carouselStart],
+    () => getCarouselTriplet(galleryMedias.map((media) => media.url), carouselStart),
+    [galleryMedias, carouselStart],
   );
 
   React.useEffect(() => {
@@ -285,14 +291,25 @@ export default function MarketplaceAdDetailPage() {
                   key={`${safeCarouselStart}-${i}`}
                   className="relative h-full min-w-0 flex-1 border-r border-white last:border-r-0"
                 >
-                  <Image
-                    src={src}
-                    alt={`${marketplaceItem.titulo} - foto ${safeCarouselStart + i + 1}`}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 34vw, 33vw"
-                    priority={i === 0}
-                  />
+                  {galleryMedias[safeCarouselStart + i]?.tipo === "VIDEO" ? (
+                    <video
+                      src={src}
+                      className="h-full w-full object-cover"
+                      controls
+                      preload="metadata"
+                      playsInline
+                      muted
+                    />
+                  ) : (
+                    <Image
+                      src={src}
+                      alt={`${marketplaceItem.titulo} - foto ${safeCarouselStart + i + 1}`}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 34vw, 33vw"
+                      priority={i === 0}
+                    />
+                  )}
                 </div>
               ))
             ) : (
@@ -504,13 +521,23 @@ export default function MarketplaceAdDetailPage() {
           <div className="flex h-full w-full items-center justify-center px-4 py-8">
             <div className="relative h-[70vh] w-full max-w-6xl overflow-hidden rounded-2xl">
               <Image
-                src={galleryImages[safeLightboxIndex]}
+                src={galleryMedias[safeLightboxIndex].url}
                 alt={`${marketplaceItem.titulo} - galeria ${safeLightboxIndex + 1}`}
                 fill
-                className="object-contain"
+                className={cn("object-contain", galleryMedias[safeLightboxIndex].tipo === "VIDEO" && "hidden")}
                 sizes="100vw"
                 priority
               />
+              {galleryMedias[safeLightboxIndex].tipo === "VIDEO" ? (
+                <video
+                  src={galleryMedias[safeLightboxIndex].url}
+                  className="h-full w-full object-contain"
+                  controls
+                  preload="metadata"
+                  playsInline
+                  autoPlay
+                />
+              ) : null}
             </div>
           </div>
 

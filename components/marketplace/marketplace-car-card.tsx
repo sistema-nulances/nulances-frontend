@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BemMarcaLogo } from "@/components/admin/bens/bem-marca-logo";
 import type { MarketplaceItem } from "@/data/marketplace-items";
+import type { MarketplaceRenderableMedia } from "@/lib/marketplace-public-map";
 import { useRouter } from "next/navigation";
 
 function categoryMeta(categoria: MarketplaceItem["categoria"]) {
@@ -48,10 +49,13 @@ function statusMeta(status: MarketplaceItem["status"]) {
   }
 }
 
-export function MarketplaceCarCard({ item }: { item: MarketplaceItem }) {
+type MarketplaceCardItem = MarketplaceItem & { midias?: MarketplaceRenderableMedia[] };
+
+export function MarketplaceCarCard({ item }: { item: MarketplaceCardItem }) {
   const router = useRouter();
   const meta = categoryMeta(item.categoria);
   const sm = statusMeta(item.status);
+  const mediaPreview = item.midias?.[0];
 
   return (
     <article
@@ -74,7 +78,16 @@ export function MarketplaceCarCard({ item }: { item: MarketplaceItem }) {
 
         <div className="mt-4 flex flex-col gap-4">
           <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-zinc-100 ring-1 ring-black/5">
-            {item.imagem ? (
+            {mediaPreview?.tipo === "VIDEO" ? (
+              <video
+                src={mediaPreview.url}
+                className="h-full w-full object-cover"
+                controls
+                preload="metadata"
+                playsInline
+                muted
+              />
+            ) : item.imagem ? (
               <Image
                 src={item.imagem}
                 alt={item.titulo}
