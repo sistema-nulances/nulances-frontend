@@ -133,7 +133,8 @@ export function buildMarketplaceTechSheet(
   const versao = auction?.versao ?? marketplace.titulo;
   const combustivel = auction?.combustivel ?? marketplace.combustivel;
   const cambio = auction?.cambio ?? marketplace.cambio;
-  const cor = auction?.cor ?? "—";
+  const marketplaceCor = (marketplace as MarketplaceItem & { cor?: string }).cor;
+  const cor = auction?.cor ?? marketplaceCor ?? "—";
   const km = auction?.km ?? marketplace.km;
   const { fab, mod } = safeYearFromAno(marketplace.ano);
   const anoFab = auction?.anoFabricacao ?? fab;

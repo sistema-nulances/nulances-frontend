@@ -30,7 +30,6 @@ import { buscarAnuncioPublicoPorId } from "@/lib/repositories/marketplace-anunci
 import { mapAnuncioPublicoDetalheToMarketplaceItem } from "@/lib/marketplace-public-map";
 import type { AnuncioPublicoDetalheResponse } from "@/lib/repositories/types/marketplace-public.types";
 import { getApiBaseUrl } from "@/lib/api/api-url";
-import { consultarFipePorMarcaModeloAno } from "@/lib/repositories/fipe-repository";
 
 function TechSpecGrid({ rows }: { rows: TechSheetRow[] }) {
   return (
@@ -71,15 +70,6 @@ function resolveSellerPhotoUrl(raw: string | null | undefined): string | undefin
   const base = getApiBaseUrl();
   if (value.startsWith("/")) return `${base}${value}`;
   return `${base}/${value}`;
-}
-
-function resolveAnoReferencia(anoRaw: string | null | undefined, anoNum: number | null | undefined): number | null {
-  if (Number.isFinite(anoNum)) return Number(anoNum);
-  const first = String(anoRaw ?? "")
-    .split("/")[0]
-    ?.trim();
-  const parsed = Number(first);
-  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function getWhatsappHref(phoneRaw: string | null | undefined, modelo: string): string | null {
@@ -174,61 +164,10 @@ export default function MarketplaceAdDetailPage() {
     return mapAnuncioPublicoDetalheToMarketplaceItem(detail);
   }, [detail]);
   const effectiveMarketplaceItem = marketplaceItem ?? FALLBACK_MARKETPLACE_ITEM;
-  const [fipe, setFipe] = React.useState("Sob consulta");
-  const [loadingFipe, setLoadingFipe] = React.useState(false);
 
   React.useEffect(() => {
     setCarouselStart(0);
   }, [id]);
-
-  React.useEffect(() => {
-    if (!marketplaceItem) {
-      setFipe("Sob consulta");
-      setLoadingFipe(false);
-      return;
-    }
-    const marcaRef = String(detail?.marcaVeiculo ?? effectiveMarketplaceItem.marca ?? "").trim();
-    const modeloRef = String(detail?.modelo ?? effectiveMarketplaceItem.modelo ?? "").trim();
-    const anoRef = resolveAnoReferencia(effectiveMarketplaceItem.ano, detail?.ano);
-    if (!marcaRef || !modeloRef || !anoRef) {
-      setFipe("Sob consulta");
-      setLoadingFipe(false);
-      return;
-    }
-
-    let active = true;
-    setLoadingFipe(true);
-    void consultarFipePorMarcaModeloAno({
-      marca: marcaRef,
-      modelo: modeloRef,
-      ano: anoRef,
-      tipoVeiculo: effectiveMarketplaceItem.categoria,
-    })
-      .then((valor) => {
-        if (!active) return;
-        setFipe(valor || "Sob consulta");
-      })
-      .catch(() => {
-        if (!active) return;
-        setFipe("Sob consulta");
-      })
-      .finally(() => {
-        if (active) setLoadingFipe(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [
-    detail?.ano,
-    detail?.marcaVeiculo,
-    detail?.modelo,
-    effectiveMarketplaceItem.ano,
-    effectiveMarketplaceItem.categoria,
-    effectiveMarketplaceItem.marca,
-    effectiveMarketplaceItem.modelo,
-    marketplaceItem,
-  ]);
 
   const anoFabMod = buildAnoFabMod(effectiveMarketplaceItem);
   const cor = detail?.cor?.trim() || "N/A";
@@ -474,17 +413,6 @@ export default function MarketplaceAdDetailPage() {
                   <div className="min-w-0">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500">Cor</p>
                     <p className="mt-1.5 text-[15px] font-semibold text-zinc-900">{cor}</p>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500">FIPE</p>
-                    <p
-                      className={cn(
-                        "mt-1.5 text-[15px] font-semibold",
-                        loadingFipe || fipe === "Sob consulta" ? "text-zinc-700" : "text-emerald-600",
-                      )}
-                    >
-                      {loadingFipe ? "Consultando..." : fipe}
-                    </p>
                   </div>
                   <div className="min-w-0">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500">Blindado</p>
