@@ -143,10 +143,10 @@ export default function MarketplaceHomePage() {
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h1 className="text-3xl font-semibold tracking-[-0.04em] text-zinc-950 md:text-4xl">
-                Marketplace de Automóveis
+                Marketplace
               </h1>
               <p className="mt-2 text-sm text-zinc-500 md:text-base">
-                Uma experiência menor e direta para comprar e descobrir veículos.
+                Compre e descubra anúncios por categoria.
               </p>
             </div>
           </div>

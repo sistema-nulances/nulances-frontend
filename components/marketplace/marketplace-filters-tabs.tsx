@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { FilterHorizontalIcon } from "@hugeicons/core-free-icons";
-import { Menu01Icon } from "@hugeicons/core-free-icons";
 import type { MarketplaceCategoryFilter, MarketplaceCondicao, MarketplaceStatus } from "@/data/marketplace-items";
 import { Badge } from "@/components/ui/badge";
 
@@ -34,7 +33,7 @@ function PlainFilterSep({ className }: { className?: string }) {
 type CategoryOpt = {
   value: MarketplaceCategoryFilter;
   label: string;
-  icon: React.ComponentProps<typeof HugeiconsIcon>["icon"];
+  emoji: string;
 };
 
 function MarketplaceFilterForm({
@@ -92,7 +91,9 @@ function MarketplaceFilterForm({
                     : ""
                 )}
               >
-                <HugeiconsIcon icon={cat.icon} size={18} color="currentColor" strokeWidth={1.9} />
+                <span aria-hidden className="text-base leading-none">
+                  {cat.emoji}
+                </span>
                 {cat.label}
               </Badge>
             );
@@ -298,27 +299,28 @@ export function MarketplaceFiltersTabs({
   }
 
   const categoryOptions: CategoryOpt[] = [
-    { value: "todos", label: "Todos", icon: Menu01Icon },
-    { value: "IMOVEIS", label: "Imóveis", icon: Menu01Icon },
-    { value: "CELULARES_E_TELEFONIA", label: "Celulares e telefonia", icon: Menu01Icon },
-    { value: "CASA_DECORACAO_E_UTENSILIOS", label: "Casa, decoração e utensílios", icon: Menu01Icon },
-    { value: "ESPORTES_E_FITNESS", label: "Esportes e fitness", icon: Menu01Icon },
-    { value: "SERVICOS", label: "Serviços", icon: Menu01Icon },
-    { value: "MODA_E_BELEZA", label: "Moda e beleza", icon: Menu01Icon },
-    { value: "ARTIGOS_INFANTIS", label: "Artigos infantis", icon: Menu01Icon },
-    { value: "ANIMAIS_DE_ESTIMACAO", label: "Animais de estimação", icon: Menu01Icon },
-    { value: "MUSICA_E_HOBBIES", label: "Música e hobbies", icon: Menu01Icon },
-    { value: "AGRO_E_INDUSTRIA", label: "Agro e indústria", icon: Menu01Icon },
-    { value: "VAGAS_DE_EMPREGO", label: "Vagas de emprego", icon: Menu01Icon },
-    { value: "COMERCIO", label: "Comércio", icon: Menu01Icon },
-    { value: "GAMES", label: "Games", icon: Menu01Icon },
-    { value: "TVS_E_VIDEO", label: "TVs e vídeo", icon: Menu01Icon },
-    { value: "AUDIO", label: "Áudio", icon: Menu01Icon },
-    { value: "INFORMATICA", label: "Informática", icon: Menu01Icon },
-    { value: "ELETRO", label: "Eletro", icon: Menu01Icon },
-    { value: "MOVEIS", label: "Móveis", icon: Menu01Icon },
-    { value: "MATERIAIS_DE_CONSTRUCAO", label: "Materiais de construção", icon: Menu01Icon },
-    { value: "ESCRITORIO_E_HOME_OFFICE", label: "Escritório e home office", icon: Menu01Icon },
+    { value: "todos", label: "Todos", emoji: "📂" },
+    { value: "VEICULOS", label: "Automóveis", emoji: "🚗" },
+    { value: "IMOVEIS", label: "Imóveis", emoji: "🏠" },
+    { value: "CELULARES_E_TELEFONIA", label: "Celulares e telefonia", emoji: "📱" },
+    { value: "CASA_DECORACAO_E_UTENSILIOS", label: "Casa, decoração e utensílios", emoji: "🏡" },
+    { value: "ESPORTES_E_FITNESS", label: "Esportes e fitness", emoji: "🏋️" },
+    { value: "SERVICOS", label: "Serviços", emoji: "🛠️" },
+    { value: "MODA_E_BELEZA", label: "Moda e beleza", emoji: "💄" },
+    { value: "ARTIGOS_INFANTIS", label: "Artigos infantis", emoji: "🧸" },
+    { value: "ANIMAIS_DE_ESTIMACAO", label: "Animais de estimação", emoji: "🐾" },
+    { value: "MUSICA_E_HOBBIES", label: "Música e hobbies", emoji: "🎵" },
+    { value: "AGRO_E_INDUSTRIA", label: "Agro e indústria", emoji: "🌾" },
+    { value: "VAGAS_DE_EMPREGO", label: "Vagas de emprego", emoji: "💼" },
+    { value: "COMERCIO", label: "Comércio", emoji: "🏪" },
+    { value: "GAMES", label: "Games", emoji: "🎮" },
+    { value: "TVS_E_VIDEO", label: "TVs e vídeo", emoji: "📺" },
+    { value: "AUDIO", label: "Áudio", emoji: "🎧" },
+    { value: "INFORMATICA", label: "Informática", emoji: "💻" },
+    { value: "ELETRO", label: "Eletro", emoji: "🔌" },
+    { value: "MOVEIS", label: "Móveis", emoji: "🪑" },
+    { value: "MATERIAIS_DE_CONSTRUCAO", label: "Materiais de construção", emoji: "🧱" },
+    { value: "ESCRITORIO_E_HOME_OFFICE", label: "Escritório e home office", emoji: "🖇️" },
   ];
 
   const formProps = {
