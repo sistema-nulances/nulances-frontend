@@ -22,12 +22,37 @@ import { ApiError } from "@/lib/repositories/types/auth.types";
 import type {
   AnuncioDetalheTecnicoRequest,
   CambioVeiculoApi,
+  CategoriaAnuncioApi,
   CombustivelVeiculoApi,
   CondicaoAnuncioVeiculoApi,
   CriarAnuncioRequest,
   TipoMidiaAnuncioApi,
   TipoVeiculoAnuncioApi,
 } from "@/lib/repositories/types/seller-anuncio.types";
+
+const CATEGORIA_OPTIONS: SelectOption[] = [
+  { value: "VEICULOS", label: "🚗 Automóveis" },
+  { value: "IMOVEIS", label: "🏠 Imóveis" },
+  { value: "CELULARES_E_TELEFONIA", label: "📱 Celulares e telefonia" },
+  { value: "CASA_DECORACAO_E_UTENSILIOS", label: "🏡 Casa, decoração e utensílios" },
+  { value: "ESPORTES_E_FITNESS", label: "🏋️ Esportes e fitness" },
+  { value: "SERVICOS", label: "🛠️ Serviços" },
+  { value: "MODA_E_BELEZA", label: "💄 Moda e beleza" },
+  { value: "ARTIGOS_INFANTIS", label: "🧸 Artigos infantis" },
+  { value: "ANIMAIS_DE_ESTIMACAO", label: "🐾 Animais de estimação" },
+  { value: "MUSICA_E_HOBBIES", label: "🎵 Música e hobbies" },
+  { value: "AGRO_E_INDUSTRIA", label: "🌾 Agro e indústria" },
+  { value: "VAGAS_DE_EMPREGO", label: "💼 Vagas de emprego" },
+  { value: "COMERCIO", label: "🏪 Comércio" },
+  { value: "GAMES", label: "🎮 Games" },
+  { value: "TVS_E_VIDEO", label: "📺 TVs e vídeo" },
+  { value: "AUDIO", label: "🎧 Áudio" },
+  { value: "INFORMATICA", label: "💻 Informática" },
+  { value: "ELETRO", label: "🔌 Eletro" },
+  { value: "MOVEIS", label: "🪑 Móveis" },
+  { value: "MATERIAIS_DE_CONSTRUCAO", label: "🧱 Materiais de construção" },
+  { value: "ESCRITORIO_E_HOME_OFFICE", label: "🖇️ Escritório e home office" },
+];
 
 const TIPO_OPTIONS: SelectOption[] = [
   { value: "CARRO", label: "Carro" },
@@ -36,7 +61,6 @@ const TIPO_OPTIONS: SelectOption[] = [
   { value: "SUV", label: "SUV" },
   { value: "CAMINHONETE", label: "Caminhonete" },
   { value: "ONIBUS", label: "Ônibus" },
-  { value: "OUTRO", label: "Outro" },
 ];
 
 const CONDICAO_OPTIONS: SelectOption[] = [
@@ -116,6 +140,7 @@ export default function SellerCriarAnuncioPage() {
   const { user, status } = useAuth();
   const warnedNoPlanRef = React.useRef(false);
 
+  const [categoria, setCategoria] = React.useState<CategoriaAnuncioApi | "">("");
   const [marca, setMarca] = React.useState("");
   const [modelo, setModelo] = React.useState("");
   const [preco, setPreco] = React.useState("");
@@ -135,6 +160,8 @@ export default function SellerCriarAnuncioPage() {
   const [loading, setLoading] = React.useState(false);
   const [uploadStatus, setUploadStatus] = React.useState<string | null>(null);
 
+  const isVeiculo = categoria === "VEICULOS";
+
   React.useEffect(() => {
     if (status !== "ready") return;
     if (!user?.id?.trim()) return;
@@ -145,7 +172,8 @@ export default function SellerCriarAnuncioPage() {
         if (cancelled) return;
         const statusAssinatura = String(painel.assinaturaAtual?.status ?? "").toUpperCase();
         const disponiveis = Number(painel.assinaturaAtual?.anunciosDisponiveis ?? 0);
-        if (statusAssinatura === "ATIVA" && disponiveis > 0) return;
+        const ilimitado = Boolean(painel.assinaturaAtual?.plano?.ilimitado);
+        if (statusAssinatura === "ATIVA" && (ilimitado || disponiveis > 0)) return;
       } catch {
         if (cancelled) return;
       }
@@ -164,21 +192,37 @@ export default function SellerCriarAnuncioPage() {
     };
   }, [router, status, toast, user?.id]);
 
-  const canSubmit = React.useMemo(
-    () =>
-      marca.trim() &&
+  const canSubmit = React.useMemo(() => {
+    const baseOk =
+      categoria &&
       modelo.trim() &&
       preco.trim() &&
       cidade.trim() &&
-      tipo &&
-      condicao &&
-      ano.trim() &&
-      combustivel &&
-      cambio &&
       descricao.trim() &&
-      midiaFiles.length > 0,
-    [ano, cambio, cidade, combustivel, condicao, descricao, marca, midiaFiles.length, modelo, preco, tipo]
-  );
+      midiaFiles.length > 0;
+
+    if (!baseOk) return false;
+
+    if (isVeiculo) {
+      return Boolean(marca && tipo && condicao && ano.trim() && combustivel && cambio);
+    }
+
+    return true;
+  }, [
+    ano,
+    cambio,
+    categoria,
+    cidade,
+    combustivel,
+    condicao,
+    descricao,
+    isVeiculo,
+    marca,
+    midiaFiles.length,
+    modelo,
+    preco,
+    tipo,
+  ]);
 
   const onPickFiles = (files: FileList | null) => {
     if (!files?.length) return;
@@ -198,7 +242,7 @@ export default function SellerCriarAnuncioPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit) {
+    if (!canSubmit || !categoria) {
       toast({
         type: "warning",
         title: "Preencha os campos obrigatórios",
@@ -208,16 +252,21 @@ export default function SellerCriarAnuncioPage() {
     }
 
     const precoNumber = Number(preco.replace(",", "."));
-    const anoNumber = Number(ano);
-    const quilometragemNumber = quilometragem.trim() ? Number(quilometragem) : undefined;
     if (!Number.isFinite(precoNumber) || precoNumber <= 0) {
       toast({ type: "warning", title: "Preço inválido", description: "Informe um preço maior que zero." });
       return;
     }
-    if (!Number.isFinite(anoNumber) || anoNumber <= 1900) {
-      toast({ type: "warning", title: "Ano inválido", description: "Informe um ano válido." });
-      return;
+
+    let anoNumber: number | undefined;
+    if (isVeiculo) {
+      anoNumber = Number(ano);
+      if (!Number.isFinite(anoNumber) || anoNumber <= 1900) {
+        toast({ type: "warning", title: "Ano inválido", description: "Informe um ano válido." });
+        return;
+      }
     }
+
+    const quilometragemNumber = isVeiculo && quilometragem.trim() ? Number(quilometragem) : undefined;
     if (quilometragemNumber !== undefined && (!Number.isFinite(quilometragemNumber) || quilometragemNumber < 0)) {
       toast({ type: "warning", title: "Quilometragem inválida", description: "Informe um valor válido." });
       return;
@@ -253,26 +302,31 @@ export default function SellerCriarAnuncioPage() {
       }
 
       setUploadStatus("Salvando anúncio...");
-      await criarAnuncioVendedor({
-        categoria: "COMERCIO",
-        marca: marca.trim(),
+      const payload: CriarAnuncioRequest = {
+        categoria,
+        marca: isVeiculo ? marca.trim() : "",
         modelo: modelo.trim(),
         preco: precoNumber,
         cidade: cidade.trim(),
-        tipo: tipo as TipoVeiculoAnuncioApi,
-        condicao: condicao as CondicaoAnuncioVeiculoApi,
-        ano: anoNumber,
-        quilometragem: quilometragemNumber,
-        combustivel: combustivel as CombustivelVeiculoApi,
-        cambio: cambio as CambioVeiculoApi,
-        finalChassi: finalChassi.trim() || undefined,
-        cor: cor.trim() || undefined,
-        blindado,
-        placaVeiculo: placaVeiculo.trim() || undefined,
         descricao: descricao.trim(),
-        detalheTecnico: EMPTY_DETALHE_TECNICO,
         midias,
-      });
+      };
+
+      if (isVeiculo) {
+        payload.tipo = tipo as TipoVeiculoAnuncioApi;
+        payload.condicao = condicao as CondicaoAnuncioVeiculoApi;
+        payload.ano = anoNumber;
+        payload.quilometragem = quilometragemNumber;
+        payload.combustivel = combustivel as CombustivelVeiculoApi;
+        payload.cambio = cambio as CambioVeiculoApi;
+        payload.finalChassi = finalChassi.trim() || undefined;
+        payload.cor = cor.trim() || undefined;
+        payload.blindado = blindado;
+        payload.placaVeiculo = placaVeiculo.trim() || undefined;
+        payload.detalheTecnico = EMPTY_DETALHE_TECNICO;
+      }
+
+      await criarAnuncioVendedor(payload);
 
       toast({
         type: "success",
@@ -297,30 +351,51 @@ export default function SellerCriarAnuncioPage() {
     <div>
       <PageHeader
         title="Criar Anúncio"
-        subtitle="Preencha os dados do veículo, envie as mídias e publique para análise."
+        subtitle="Escolha a categoria, preencha os dados do anúncio, envie as mídias e publique para análise."
       />
 
       <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <Label htmlFor="marca">Marca do veículo</Label>
+            <Label htmlFor="categoria">Categoria do anúncio</Label>
             <Select
-              id="marca"
-              value={marca}
-              onValueChange={setMarca}
-              options={BEM_MARCA_VEICULO_OPTIONS}
-              placeholder="Selecione"
+              id="categoria"
+              value={categoria}
+              onValueChange={(v) => setCategoria(v as CategoriaAnuncioApi)}
+              options={CATEGORIA_OPTIONS}
+              placeholder="Selecione a categoria"
               className="mt-1.5"
             />
+            <p className="mt-1 text-xs text-zinc-500">
+              {isVeiculo
+                ? "Categoria veicular: preencha marca, modelo, ano e demais dados técnicos."
+                : categoria
+                ? "Preencha título, preço, localização e uma descrição com detalhes do item/serviço."
+                : "Selecione uma categoria para continuar."}
+            </p>
           </div>
 
+          {isVeiculo ? (
+            <div className="sm:col-span-2">
+              <Label htmlFor="marca">Marca do veículo</Label>
+              <Select
+                id="marca"
+                value={marca}
+                onValueChange={setMarca}
+                options={BEM_MARCA_VEICULO_OPTIONS}
+                placeholder="Selecione"
+                className="mt-1.5"
+              />
+            </div>
+          ) : null}
+
           <div>
-            <Label htmlFor="modelo">Modelo</Label>
+            <Label htmlFor="modelo">{isVeiculo ? "Modelo" : "Título do anúncio"}</Label>
             <Input
               id="modelo"
               value={modelo}
               onChange={(e) => setModelo(e.target.value)}
-              placeholder="Ex.: Civic Touring"
+              placeholder={isVeiculo ? "Ex.: Civic Touring" : "Ex.: iPhone 15 Pro 256GB"}
               className="mt-1.5"
               required
             />
@@ -353,114 +428,127 @@ export default function SellerCriarAnuncioPage() {
             />
           </div>
 
-          <div>
-            <Label htmlFor="ano">Ano</Label>
-            <Input
-              id="ano"
-              type="number"
-              min="1900"
-              max="2100"
-              value={ano}
-              onChange={(e) => setAno(e.target.value)}
-              placeholder="Ex.: 2022"
-              className="mt-1.5"
-              required
-            />
-          </div>
+          {isVeiculo ? (
+            <>
+              <div>
+                <Label htmlFor="ano">Ano</Label>
+                <Input
+                  id="ano"
+                  type="number"
+                  min="1900"
+                  max="2100"
+                  value={ano}
+                  onChange={(e) => setAno(e.target.value)}
+                  placeholder="Ex.: 2022"
+                  className="mt-1.5"
+                />
+              </div>
 
-          <div>
-            <Label htmlFor="tipo">Tipo</Label>
-            <Select
-              id="tipo"
-              value={tipo}
-              onValueChange={setTipo}
-              options={TIPO_OPTIONS}
-              placeholder="Selecione"
-              className="mt-1.5"
-            />
-          </div>
+              <div>
+                <Label htmlFor="tipo">Tipo</Label>
+                <Select
+                  id="tipo"
+                  value={tipo}
+                  onValueChange={setTipo}
+                  options={TIPO_OPTIONS}
+                  placeholder="Selecione"
+                  className="mt-1.5"
+                />
+              </div>
 
-          <div>
-            <Label htmlFor="condicao">Condição</Label>
-            <Select
-              id="condicao"
-              value={condicao}
-              onValueChange={setCondicao}
-              options={CONDICAO_OPTIONS}
-              placeholder="Selecione"
-              className="mt-1.5"
-            />
-          </div>
+              <div>
+                <Label htmlFor="condicao">Condição</Label>
+                <Select
+                  id="condicao"
+                  value={condicao}
+                  onValueChange={setCondicao}
+                  options={CONDICAO_OPTIONS}
+                  placeholder="Selecione"
+                  className="mt-1.5"
+                />
+              </div>
 
-          <div>
-            <Label htmlFor="combustivel">Combustível</Label>
-            <Select
-              id="combustivel"
-              value={combustivel}
-              onValueChange={setCombustivel}
-              options={COMBUSTIVEL_OPTIONS}
-              placeholder="Selecione"
-              className="mt-1.5"
-            />
-          </div>
+              <div>
+                <Label htmlFor="combustivel">Combustível</Label>
+                <Select
+                  id="combustivel"
+                  value={combustivel}
+                  onValueChange={setCombustivel}
+                  options={COMBUSTIVEL_OPTIONS}
+                  placeholder="Selecione"
+                  className="mt-1.5"
+                />
+              </div>
 
-          <div>
-            <Label htmlFor="cambio">Câmbio</Label>
-            <Select
-              id="cambio"
-              value={cambio}
-              onValueChange={setCambio}
-              options={CAMBIO_OPTIONS}
-              placeholder="Selecione"
-              className="mt-1.5"
-            />
-          </div>
+              <div>
+                <Label htmlFor="cambio">Câmbio</Label>
+                <Select
+                  id="cambio"
+                  value={cambio}
+                  onValueChange={setCambio}
+                  options={CAMBIO_OPTIONS}
+                  placeholder="Selecione"
+                  className="mt-1.5"
+                />
+              </div>
 
-          <div>
-            <Label htmlFor="quilometragem">Quilometragem (opcional)</Label>
-            <Input
-              id="quilometragem"
-              type="number"
-              min="0"
-              value={quilometragem}
-              onChange={(e) => setQuilometragem(e.target.value)}
-              placeholder="Ex.: 45000"
-              className="mt-1.5"
-            />
-          </div>
+              <div>
+                <Label htmlFor="quilometragem">Quilometragem (opcional)</Label>
+                <Input
+                  id="quilometragem"
+                  type="number"
+                  min="0"
+                  value={quilometragem}
+                  onChange={(e) => setQuilometragem(e.target.value)}
+                  placeholder="Ex.: 45000"
+                  className="mt-1.5"
+                />
+              </div>
 
-          <div>
-            <Label htmlFor="placa">Placa (opcional)</Label>
-            <Input
-              id="placa"
-              value={placaVeiculo}
-              onChange={(e) => setPlacaVeiculo(e.target.value)}
-              placeholder="Ex.: ABC1D23"
-              className="mt-1.5"
-            />
-          </div>
+              <div>
+                <Label htmlFor="placa">Placa (opcional)</Label>
+                <Input
+                  id="placa"
+                  value={placaVeiculo}
+                  onChange={(e) => setPlacaVeiculo(e.target.value)}
+                  placeholder="Ex.: ABC1D23"
+                  className="mt-1.5"
+                />
+              </div>
 
-          <div>
-            <Label htmlFor="chassi">Final do chassi (opcional)</Label>
-            <Input
-              id="chassi"
-              value={finalChassi}
-              onChange={(e) => setFinalChassi(e.target.value)}
-              placeholder="Ex.: 1234"
-              className="mt-1.5"
-            />
-          </div>
+              <div>
+                <Label htmlFor="chassi">Final do chassi (opcional)</Label>
+                <Input
+                  id="chassi"
+                  value={finalChassi}
+                  onChange={(e) => setFinalChassi(e.target.value)}
+                  placeholder="Ex.: 1234"
+                  className="mt-1.5"
+                />
+              </div>
 
-          <div>
-            <Label htmlFor="cor">Cor (opcional)</Label>
-            <Input
-              id="cor"
-              value={cor}
-              onChange={(e) => setCor(e.target.value)}
-              placeholder="Ex.: Branco"
-              className="mt-1.5"
-            />
-          </div>
+              <div>
+                <Label htmlFor="cor">Cor (opcional)</Label>
+                <Input
+                  id="cor"
+                  value={cor}
+                  onChange={(e) => setCor(e.target.value)}
+                  placeholder="Ex.: Branco"
+                  className="mt-1.5"
+                />
+              </div>
+
+              <label className="sm:col-span-2 inline-flex items-center gap-2 text-sm text-zinc-700">
+                <input
+                  type="checkbox"
+                  checked={blindado}
+                  onChange={(e) => setBlindado(e.target.checked)}
+                  className="h-4 w-4 rounded border-zinc-300"
+                />
+                Veículo blindado
+              </label>
+            </>
+          ) : null}
 
           <div className="sm:col-span-2">
             <Label htmlFor="descricao">Descrição</Label>
@@ -473,20 +561,14 @@ export default function SellerCriarAnuncioPage() {
                 "mt-1.5 w-full rounded-2xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--nulance-purple)]/35"
               )}
-              placeholder="Descreva o veículo, estado geral e diferenciais."
+              placeholder={
+                isVeiculo
+                  ? "Descreva o veículo, estado geral e diferenciais."
+                  : "Descreva o item ou serviço, incluindo características, condição e diferenciais."
+              }
               required
             />
           </div>
-
-          <label className="sm:col-span-2 inline-flex items-center gap-2 text-sm text-zinc-700">
-            <input
-              type="checkbox"
-              checked={blindado}
-              onChange={(e) => setBlindado(e.target.checked)}
-              className="h-4 w-4 rounded border-zinc-300"
-            />
-            Veículo blindado
-          </label>
 
           <div className="sm:col-span-2">
             <Label htmlFor="midias">Mídias (imagens e vídeos)</Label>

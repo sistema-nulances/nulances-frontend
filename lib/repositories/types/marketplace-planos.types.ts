@@ -24,6 +24,8 @@ export type PlanoAnuncioResponse = {
   valorMensal: number;
   totalAnuncios: number;
   ativo: boolean;
+  /** Plano sem limite de anúncios — quando true, `anunciosDisponiveis` é null. */
+  ilimitado?: boolean | null;
 };
 
 export type AssinaturaPlanoAtualResponse = {

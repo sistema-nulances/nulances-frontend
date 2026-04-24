@@ -18,6 +18,14 @@ export async function listarAnunciosPublicos(
   if (busca) qs.set("busca", busca);
   const categoria = params?.categoria?.trim();
   if (categoria) qs.set("categoria", categoria);
+  const tipo = params?.tipo?.trim();
+  if (tipo) qs.set("tipo", tipo);
+  const condicao = params?.condicao?.trim();
+  if (condicao) qs.set("condicao", condicao);
+  const combustivel = params?.combustivel?.trim();
+  if (combustivel) qs.set("combustivel", combustivel);
+  const cambio = params?.cambio?.trim();
+  if (cambio) qs.set("cambio", cambio);
   qs.set("page", String(params?.page ?? 0));
   qs.set("size", String(params?.size ?? 24));
 

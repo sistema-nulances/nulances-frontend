@@ -11,21 +11,31 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Search01Icon } from "@hugeicons/core-free-icons";
-import { MarketplaceFiltersTabs, type MarketplaceFilters } from "@/components/marketplace/marketplace-filters-tabs";
+import {
+  MarketplaceFiltersTabs,
+  type MarketplaceFilters,
+} from "@/components/marketplace/marketplace-filters-tabs";
 import { Pagination } from "@/components/ui/pagination";
-import { formatEnumDisplayLabel } from "@/lib/format-enum-label";
 import { listarAnunciosPublicos } from "@/lib/repositories/marketplace-anuncios-public-repository";
 import { mapAnuncioPublicoListToMarketplaceItem } from "@/lib/marketplace-public-map";
 import type { MarketplaceItem } from "@/data/marketplace-items";
 
 const PUBLIC_LIST_PAGE_SIZE = 120;
 
+const DEFAULT_FILTERS: MarketplaceFilters = {
+  tipo: undefined,
+  condicao: undefined,
+  combustivel: undefined,
+  cambio: undefined,
+  local: [],
+};
+
 export default function MarketplaceHomePage() {
   const [selectedCategory, setSelectedCategory] =
     React.useState<MarketplaceCategoryFilter>("todos");
   const [query, setQuery] = React.useState("");
   const [searchDebounced, setSearchDebounced] = React.useState("");
-  const [filters, setFilters] = React.useState<MarketplaceFilters | undefined>(undefined);
+  const [filters, setFilters] = React.useState<MarketplaceFilters>(DEFAULT_FILTERS);
   const itemsPerPage = 9;
   const [currentPage, setCurrentPage] = React.useState(1);
 
@@ -38,12 +48,21 @@ export default function MarketplaceHomePage() {
     return () => window.clearTimeout(t);
   }, [query]);
 
+  const categoriaBackend =
+    selectedCategory === "todos" ? undefined : String(selectedCategory);
+
   React.useEffect(() => {
     let active = true;
     setListLoading(true);
     setListError(null);
     void listarAnunciosPublicos({
       busca: searchDebounced || undefined,
+      categoria: categoriaBackend,
+      tipo: selectedCategory === "VEICULOS" ? filters.tipo : undefined,
+      condicao: selectedCategory === "VEICULOS" ? filters.condicao : undefined,
+      combustivel:
+        selectedCategory === "VEICULOS" ? filters.combustivel : undefined,
+      cambio: selectedCategory === "VEICULOS" ? filters.cambio : undefined,
       page: 0,
       size: PUBLIC_LIST_PAGE_SIZE,
     })
@@ -61,7 +80,9 @@ export default function MarketplaceHomePage() {
       .catch((e: unknown) => {
         if (!active) return;
         setApiItems([]);
-        setListError(e instanceof Error ? e.message : "Não foi possível carregar os anúncios.");
+        setListError(
+          e instanceof Error ? e.message : "Não foi possível carregar os anúncios."
+        );
       })
       .finally(() => {
         if (active) setListLoading(false);
@@ -69,58 +90,29 @@ export default function MarketplaceHomePage() {
     return () => {
       active = false;
     };
-  }, [searchDebounced]);
+  }, [
+    searchDebounced,
+    categoriaBackend,
+    selectedCategory,
+    filters.tipo,
+    filters.condicao,
+    filters.combustivel,
+    filters.cambio,
+  ]);
 
   const filteredItems = React.useMemo(() => {
     const q = query.trim().toLowerCase();
     return apiItems.filter((item) => {
-      if (selectedCategory !== "todos" && item.categoria !== selectedCategory) return false;
-
-      if (filters) {
-        if (
-          filters.status.length > 0 &&
-          !filters.status.some((s) => s === item.status)
-        ) {
-          return false;
-        }
-
-        if (
-          filters.combustivel.length > 0 &&
-          !filters.combustivel.some(
-            (f) => formatEnumDisplayLabel(item.combustivel) === formatEnumDisplayLabel(f)
-          )
-        ) {
-          return false;
-        }
-
-        if (
-          filters.cambio.length > 0 &&
-          !filters.cambio.some((f) => formatEnumDisplayLabel(item.cambio) === formatEnumDisplayLabel(f))
-        ) {
-          return false;
-        }
-
-        if (
-          filters.condicao.length > 0 &&
-          !filters.condicao.some(
-            (f) => formatEnumDisplayLabel(item.condicao) === formatEnumDisplayLabel(f)
-          )
-        ) {
-          return false;
-        }
-
-        if (filters.local.length > 0) {
-          const matchesLocal = filters.local.some((uf) => item.local.includes(uf));
-          if (!matchesLocal) return false;
-        }
+      if (filters.local.length > 0) {
+        const matchesLocal = filters.local.some((uf) => item.local.includes(uf));
+        if (!matchesLocal) return false;
       }
 
       if (!q) return true;
-
       const haystack = `${item.titulo} ${item.marca} ${item.modelo} ${item.local}`.toLowerCase();
       return haystack.includes(q);
     });
-  }, [apiItems, query, selectedCategory, filters]);
+  }, [apiItems, query, filters.local]);
 
   React.useEffect(() => {
     setCurrentPage(1);
@@ -174,7 +166,7 @@ export default function MarketplaceHomePage() {
                   size="md"
                   className="h-14 shrink-0 rounded-full px-7 sm:w-auto"
                   onClick={() => {
-                    // busca no servidor (modelo) após debounce; aqui só reforça o foco no campo
+                    // busca no servidor (modelo) após debounce
                   }}
                 >
                   Buscar
@@ -186,7 +178,8 @@ export default function MarketplaceHomePage() {
           <MarketplaceFiltersTabs
             selectedCategory={selectedCategory}
             onCategoryChange={setSelectedCategory}
-            onFilterApply={(next) => setFilters(next)}
+            filters={filters}
+            onFiltersChange={setFilters}
           />
 
           {listError ? (
@@ -196,7 +189,9 @@ export default function MarketplaceHomePage() {
           ) : null}
 
           <div className="mb-6 text-sm font-medium text-zinc-500">
-            {listLoading ? "Carregando anúncios…" : `${filteredItems.length} anúncios`}
+            {listLoading
+              ? "Carregando anúncios…"
+              : `${filteredItems.length} anúncios`}
           </div>
 
           {listLoading ? (
@@ -224,7 +219,9 @@ export default function MarketplaceHomePage() {
             </>
           ) : (
             <div className="flex flex-col items-center justify-center rounded-[28px] border border-dashed border-zinc-200/10 bg-zinc-50 py-20 text-center">
-              <p className="text-lg font-semibold text-zinc-900">Nenhum anúncio encontrado</p>
+              <p className="text-lg font-semibold text-zinc-900">
+                Nenhum anúncio encontrado
+              </p>
               <p className="mt-2 max-w-md text-sm text-zinc-500">
                 Tente ajustar a categoria ou remover o texto da busca.
               </p>

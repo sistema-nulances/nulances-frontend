@@ -1,34 +1,18 @@
 "use client";
 
 import React from "react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetSeparator,
-} from "@/components/ui/sheet";
-import { MobileFilterScreen } from "@/components/layout/mobile-filter-screen";
-import { useIsMobileMaxMd } from "@/lib/use-is-mobile";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/cn";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { FilterHorizontalIcon } from "@hugeicons/core-free-icons";
-import type { MarketplaceCategoryFilter, MarketplaceCondicao, MarketplaceStatus } from "@/data/marketplace-items";
 import { Badge } from "@/components/ui/badge";
+import { Select, type SelectOption } from "@/components/ui/select";
+import { cn } from "@/lib/cn";
+import type { MarketplaceCategoryFilter } from "@/data/marketplace-items";
 
 export type MarketplaceFilters = {
-  status: MarketplaceStatus[];
-  combustivel: string[];
-  cambio: string[];
-  condicao: MarketplaceCondicao[];
+  tipo?: string;
+  condicao?: string;
+  combustivel?: string;
+  cambio?: string;
   local: string[];
 };
-
-function PlainFilterSep({ className }: { className?: string }) {
-  return <div className={cn("h-px w-full bg-zinc-100", className)} />;
-}
 
 type CategoryOpt = {
   value: MarketplaceCategoryFilter;
@@ -36,45 +20,110 @@ type CategoryOpt = {
   emoji: string;
 };
 
-function MarketplaceFilterForm({
-  categoryOptions,
+const CATEGORY_OPTIONS: CategoryOpt[] = [
+  { value: "todos", label: "Todos", emoji: "📂" },
+  { value: "VEICULOS", label: "Automóveis", emoji: "🚗" },
+  { value: "IMOVEIS", label: "Imóveis", emoji: "🏠" },
+  { value: "CELULARES_E_TELEFONIA", label: "Celulares e telefonia", emoji: "📱" },
+  { value: "CASA_DECORACAO_E_UTENSILIOS", label: "Casa, decoração e utensílios", emoji: "🏡" },
+  { value: "ESPORTES_E_FITNESS", label: "Esportes e fitness", emoji: "🏋️" },
+  { value: "SERVICOS", label: "Serviços", emoji: "🛠️" },
+  { value: "MODA_E_BELEZA", label: "Moda e beleza", emoji: "💄" },
+  { value: "ARTIGOS_INFANTIS", label: "Artigos infantis", emoji: "🧸" },
+  { value: "ANIMAIS_DE_ESTIMACAO", label: "Animais de estimação", emoji: "🐾" },
+  { value: "MUSICA_E_HOBBIES", label: "Música e hobbies", emoji: "🎵" },
+  { value: "AGRO_E_INDUSTRIA", label: "Agro e indústria", emoji: "🌾" },
+  { value: "VAGAS_DE_EMPREGO", label: "Vagas de emprego", emoji: "💼" },
+  { value: "COMERCIO", label: "Comércio", emoji: "🏪" },
+  { value: "GAMES", label: "Games", emoji: "🎮" },
+  { value: "TVS_E_VIDEO", label: "TVs e vídeo", emoji: "📺" },
+  { value: "AUDIO", label: "Áudio", emoji: "🎧" },
+  { value: "INFORMATICA", label: "Informática", emoji: "💻" },
+  { value: "ELETRO", label: "Eletro", emoji: "🔌" },
+  { value: "MOVEIS", label: "Móveis", emoji: "🪑" },
+  { value: "MATERIAIS_DE_CONSTRUCAO", label: "Materiais de construção", emoji: "🧱" },
+  { value: "ESCRITORIO_E_HOME_OFFICE", label: "Escritório e home office", emoji: "🖇️" },
+];
+
+const TIPO_VEICULO_OPTIONS: SelectOption[] = [
+  { value: "", label: "Todos os tipos" },
+  { value: "CARRO", label: "Carro" },
+  { value: "MOTO", label: "Moto" },
+  { value: "CAMINHAO", label: "Caminhão" },
+  { value: "SUV", label: "SUV" },
+  { value: "CAMINHONETE", label: "Caminhonete" },
+  { value: "ONIBUS", label: "Ônibus" },
+];
+
+const CONDICAO_VEICULO_OPTIONS: SelectOption[] = [
+  { value: "", label: "Todas as condições" },
+  { value: "PEQUENA_MONTA", label: "Pequena monta" },
+  { value: "MEDIA_MONTA", label: "Média monta" },
+  { value: "GRANDE_MONTA", label: "Grande monta" },
+];
+
+const COMBUSTIVEL_VEICULO_OPTIONS: SelectOption[] = [
+  { value: "", label: "Todos os combustíveis" },
+  { value: "FLEX", label: "Flex" },
+  { value: "DIESEL", label: "Diesel" },
+  { value: "GASOLINA", label: "Gasolina" },
+  { value: "ETANOL", label: "Etanol" },
+  { value: "ELETRICO", label: "Elétrico" },
+  { value: "HIBRIDO", label: "Híbrido" },
+];
+
+const CAMBIO_VEICULO_OPTIONS: SelectOption[] = [
+  { value: "", label: "Todos os câmbios" },
+  { value: "AUTOMATICO", label: "Automático" },
+  { value: "MANUAL", label: "Manual" },
+  { value: "CVT", label: "CVT" },
+  { value: "AUTOMATIZADO", label: "Automatizado" },
+];
+
+export function MarketplaceFiltersTabs({
   selectedCategory,
   onCategoryChange,
-  selectedStatus,
-  setSelectedStatus,
-  selectedCombustivel,
-  setSelectedCombustivel,
-  selectedCambio,
-  setSelectedCambio,
-  selectedCondicao,
-  setSelectedCondicao,
-  selectedLocal,
-  setSelectedLocal,
-  toggleFilter,
-  Separator,
+  filters,
+  onFiltersChange,
 }: {
-  categoryOptions: CategoryOpt[];
   selectedCategory: MarketplaceCategoryFilter;
   onCategoryChange: (c: MarketplaceCategoryFilter) => void;
-  selectedStatus: MarketplaceStatus[];
-  setSelectedStatus: React.Dispatch<React.SetStateAction<MarketplaceStatus[]>>;
-  selectedCombustivel: string[];
-  setSelectedCombustivel: React.Dispatch<React.SetStateAction<string[]>>;
-  selectedCambio: string[];
-  setSelectedCambio: React.Dispatch<React.SetStateAction<string[]>>;
-  selectedCondicao: MarketplaceCondicao[];
-  setSelectedCondicao: React.Dispatch<React.SetStateAction<MarketplaceCondicao[]>>;
-  selectedLocal: string[];
-  setSelectedLocal: React.Dispatch<React.SetStateAction<string[]>>;
-  toggleFilter: <T,>(list: T[], setList: React.Dispatch<React.SetStateAction<T[]>>, value: T) => void;
-  Separator: React.ComponentType<{ className?: string }>;
+  filters: MarketplaceFilters;
+  onFiltersChange: (next: MarketplaceFilters) => void;
 }) {
+  const mostrarSubfiltrosVeiculo = selectedCategory === "VEICULOS";
+
+  const updateSubFilter = React.useCallback(
+    (patch: Partial<MarketplaceFilters>) => {
+      onFiltersChange({ ...filters, ...patch });
+    },
+    [filters, onFiltersChange]
+  );
+
+  const handleCategoryChange = React.useCallback(
+    (next: MarketplaceCategoryFilter) => {
+      onCategoryChange(next);
+      if (next !== "VEICULOS") {
+        onFiltersChange({
+          ...filters,
+          tipo: undefined,
+          condicao: undefined,
+          combustivel: undefined,
+          cambio: undefined,
+        });
+      }
+    },
+    [filters, onCategoryChange, onFiltersChange]
+  );
+
   return (
-    <div className="space-y-8">
+    <div className="mb-6 space-y-5">
       <div>
-        <h3 className="mb-4 text-[15px] font-semibold tracking-[-0.02em] text-zinc-900">Categoria</h3>
+        <h3 className="mb-3 text-[13px] font-semibold uppercase tracking-wide text-zinc-500">
+          Categorias
+        </h3>
         <div className="flex flex-wrap gap-2">
-          {categoryOptions.map((cat) => {
+          {CATEGORY_OPTIONS.map((cat) => {
             const active = cat.value === selectedCategory;
             return (
               <Badge
@@ -83,7 +132,7 @@ function MarketplaceFilterForm({
                 type="button"
                 size="chip"
                 variant={active ? "purple" : "neutral"}
-                onClick={() => onCategoryChange(cat.value)}
+                onClick={() => handleCategoryChange(cat.value)}
                 className={cn(
                   "h-10 gap-2 transition-colors",
                   active
@@ -101,309 +150,39 @@ function MarketplaceFilterForm({
         </div>
       </div>
 
-      <Separator className="bg-zinc-100" />
-
-      <div className="hidden">
-        <h3 className="mb-4 text-[15px] font-semibold tracking-[-0.02em] text-zinc-900">Status do Anúncio</h3>
-        <div className="flex flex-wrap gap-2">
-          {(
-            [
-              { label: "ABERTO" as const, text: "Aberto" },
-              { label: "EM_BREVE" as const, text: "Em Breve" },
-              { label: "ENCERRADO" as const, text: "Encerrado" },
-            ] as const
-          ).map((opt) => {
-            const isActive = selectedStatus.includes(opt.label);
-            return (
-              <Badge
-                as="button"
-                key={opt.label}
-                type="button"
-                onClick={() => toggleFilter(selectedStatus, setSelectedStatus, opt.label)}
-                size="chip"
-                variant={isActive ? "purple" : "neutral"}
-                className={cn(
-                  "h-10",
-                  isActive
-                    ? "border-[var(--nulance-purple)] bg-[var(--nulance-purple)] text-white hover:opacity-95"
-                    : ""
-                )}
-              >
-                {opt.text}
-              </Badge>
-            );
-          })}
-        </div>
-      </div>
-
-      <Separator className="bg-zinc-100" />
-
-      <div className="hidden">
-        <h3 className="mb-4 text-[15px] font-semibold tracking-[-0.02em] text-zinc-900">Combustível</h3>
-        <div className="flex flex-wrap gap-2">
-          {["Flex", "Diesel", "Gasolina", "Etanol", "Elétrico", "Híbrido"].map((item) => {
-            const isActive = selectedCombustivel.includes(item);
-            return (
-              <Badge
-                as="button"
-                key={item}
-                type="button"
-                onClick={() => toggleFilter(selectedCombustivel, setSelectedCombustivel, item)}
-                size="chip"
-                variant={isActive ? "purple" : "neutral"}
-                className={cn(
-                  "h-10",
-                  isActive
-                    ? "border-[var(--nulance-purple)] bg-[var(--nulance-purple)] text-white hover:opacity-95"
-                    : ""
-                )}
-              >
-                {item}
-              </Badge>
-            );
-          })}
-        </div>
-      </div>
-
-      <Separator className="bg-zinc-100" />
-
-      <div className="hidden">
-        <h3 className="mb-4 text-[15px] font-semibold tracking-[-0.02em] text-zinc-900">Câmbio</h3>
-        <div className="flex flex-wrap gap-2">
-          {["Automático", "Manual", "CVT", "Automatizado"].map((item) => {
-            const isActive = selectedCambio.includes(item);
-            return (
-              <Badge
-                as="button"
-                key={item}
-                type="button"
-                onClick={() => toggleFilter(selectedCambio, setSelectedCambio, item)}
-                size="chip"
-                variant={isActive ? "purple" : "neutral"}
-                className={cn(
-                  "h-10",
-                  isActive
-                    ? "border-[var(--nulance-purple)] bg-[var(--nulance-purple)] text-white hover:opacity-95"
-                    : ""
-                )}
-              >
-                {item}
-              </Badge>
-            );
-          })}
-        </div>
-      </div>
-
-      <Separator className="bg-zinc-100" />
-
-      <div className="hidden">
-        <h3 className="mb-4 text-[15px] font-semibold tracking-[-0.02em] text-zinc-900">Condição</h3>
-        <div className="flex flex-wrap gap-2">
-          {["Pequena monta", "Média monta", "Grande monta"].map((item) => {
-            const cond = item as MarketplaceCondicao;
-            const isActive = selectedCondicao.includes(cond);
-            return (
-              <Badge
-                as="button"
-                key={item}
-                type="button"
-                onClick={() => toggleFilter(selectedCondicao, setSelectedCondicao, cond)}
-                size="chip"
-                variant={isActive ? "purple" : "neutral"}
-                className={cn(
-                  "h-10",
-                  isActive
-                    ? "border-[var(--nulance-purple)] bg-[var(--nulance-purple)] text-white hover:opacity-95"
-                    : ""
-                )}
-              >
-                {item}
-              </Badge>
-            );
-          })}
-        </div>
-      </div>
-
-      <Separator className="bg-zinc-100" />
-
-      <div>
-        <h3 className="mb-4 text-[15px] font-semibold tracking-[-0.02em] text-zinc-900">Local</h3>
-        <div className="flex flex-wrap gap-2">
-          {["SP", "RJ", "MG", "MT", "GO", "MS", "PR", "SC", "RS"].map((item) => {
-            const isActive = selectedLocal.includes(item);
-            return (
-              <Badge
-                as="button"
-                key={item}
-                type="button"
-                onClick={() => toggleFilter(selectedLocal, setSelectedLocal, item)}
-                size="chip"
-                variant={isActive ? "purple" : "neutral"}
-                className={cn(
-                  "h-10",
-                  isActive
-                    ? "border-[var(--nulance-purple)] bg-[var(--nulance-purple)] text-white hover:opacity-95"
-                    : ""
-                )}
-              >
-                {item}
-              </Badge>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export function MarketplaceFiltersTabs({
-  selectedCategory,
-  onCategoryChange,
-  onFilterApply,
-}: {
-  selectedCategory: MarketplaceCategoryFilter;
-  onCategoryChange: (c: MarketplaceCategoryFilter) => void;
-  onFilterApply: (filters: MarketplaceFilters) => void;
-}) {
-  const isMobile = useIsMobileMaxMd();
-  const [isFilterOpen, setIsFilterOpen] = React.useState(false);
-
-  const [selectedStatus, setSelectedStatus] = React.useState<MarketplaceStatus[]>([]);
-  const [selectedCombustivel, setSelectedCombustivel] = React.useState<string[]>([]);
-  const [selectedCambio, setSelectedCambio] = React.useState<string[]>([]);
-  const [selectedCondicao, setSelectedCondicao] = React.useState<MarketplaceCondicao[]>([]);
-  const [selectedLocal, setSelectedLocal] = React.useState<string[]>([]);
-
-  function toggleFilter<T>(list: T[], setList: React.Dispatch<React.SetStateAction<T[]>>, value: T) {
-    if (list.includes(value)) setList(list.filter((v) => v !== value));
-    else setList([...list, value]);
-  }
-
-  function clearFilters() {
-    setSelectedStatus([]);
-    setSelectedCombustivel([]);
-    setSelectedCambio([]);
-    setSelectedCondicao([]);
-    setSelectedLocal([]);
-  }
-
-  function handleApply() {
-    setIsFilterOpen(false);
-    onFilterApply({
-      status: selectedStatus,
-      combustivel: selectedCombustivel,
-      cambio: selectedCambio,
-      condicao: selectedCondicao,
-      local: selectedLocal,
-    });
-  }
-
-  const categoryOptions: CategoryOpt[] = [
-    { value: "todos", label: "Todos", emoji: "📂" },
-    { value: "VEICULOS", label: "Automóveis", emoji: "🚗" },
-    { value: "IMOVEIS", label: "Imóveis", emoji: "🏠" },
-    { value: "CELULARES_E_TELEFONIA", label: "Celulares e telefonia", emoji: "📱" },
-    { value: "CASA_DECORACAO_E_UTENSILIOS", label: "Casa, decoração e utensílios", emoji: "🏡" },
-    { value: "ESPORTES_E_FITNESS", label: "Esportes e fitness", emoji: "🏋️" },
-    { value: "SERVICOS", label: "Serviços", emoji: "🛠️" },
-    { value: "MODA_E_BELEZA", label: "Moda e beleza", emoji: "💄" },
-    { value: "ARTIGOS_INFANTIS", label: "Artigos infantis", emoji: "🧸" },
-    { value: "ANIMAIS_DE_ESTIMACAO", label: "Animais de estimação", emoji: "🐾" },
-    { value: "MUSICA_E_HOBBIES", label: "Música e hobbies", emoji: "🎵" },
-    { value: "AGRO_E_INDUSTRIA", label: "Agro e indústria", emoji: "🌾" },
-    { value: "VAGAS_DE_EMPREGO", label: "Vagas de emprego", emoji: "💼" },
-    { value: "COMERCIO", label: "Comércio", emoji: "🏪" },
-    { value: "GAMES", label: "Games", emoji: "🎮" },
-    { value: "TVS_E_VIDEO", label: "TVs e vídeo", emoji: "📺" },
-    { value: "AUDIO", label: "Áudio", emoji: "🎧" },
-    { value: "INFORMATICA", label: "Informática", emoji: "💻" },
-    { value: "ELETRO", label: "Eletro", emoji: "🔌" },
-    { value: "MOVEIS", label: "Móveis", emoji: "🪑" },
-    { value: "MATERIAIS_DE_CONSTRUCAO", label: "Materiais de construção", emoji: "🧱" },
-    { value: "ESCRITORIO_E_HOME_OFFICE", label: "Escritório e home office", emoji: "🖇️" },
-  ];
-
-  const formProps = {
-    categoryOptions,
-    selectedCategory,
-    onCategoryChange,
-    selectedStatus,
-    setSelectedStatus,
-    selectedCombustivel,
-    setSelectedCombustivel,
-    selectedCambio,
-    setSelectedCambio,
-    selectedCondicao,
-    setSelectedCondicao,
-    selectedLocal,
-    setSelectedLocal,
-    toggleFilter,
-  };
-
-  const footer = (
-    <div className="flex items-center gap-3">
-      <Button
-        type="button"
-        variant="outline"
-        onClick={clearFilters}
-        className="h-12 flex-1 rounded-full border-zinc-200 text-zinc-600 hover:bg-zinc-50"
-      >
-        Limpar
-      </Button>
-      <Button
-        type="button"
-        onClick={handleApply}
-        className="h-12 flex-[2] rounded-full bg-[var(--nulance-purple)] text-white hover:opacity-90"
-      >
-        Ver resultados
-      </Button>
-    </div>
-  );
-
-  return (
-    <>
-      <div className="mb-6 flex justify-end">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setIsFilterOpen(true)}
-          className={cn(
-            "h-11 w-full rounded-full border-[1.5px] px-5 sm:h-[42px] sm:w-auto",
-            "border-zinc-200 bg-white/40 text-[var(--nulance-purple)]",
-            "hover:border-zinc-300 hover:bg-white/60"
-          )}
-        >
-          <HugeiconsIcon icon={FilterHorizontalIcon} size={20} color="#63146c" strokeWidth={1.9} />
-          <span className="ml-2">Filtros</span>
-        </Button>
-      </div>
-
-      <MobileFilterScreen
-        open={isFilterOpen && isMobile}
-        onClose={() => setIsFilterOpen(false)}
-        title="Filtros"
-        description="Refine sua busca por categoria."
-        footer={footer}
-      >
-        <MarketplaceFilterForm {...formProps} Separator={PlainFilterSep} />
-      </MobileFilterScreen>
-
-      <Sheet open={isFilterOpen && !isMobile} onClose={() => setIsFilterOpen(false)} side="right">
-        <SheetContent className="flex w-full max-w-[400px] flex-col overflow-hidden bg-white">
-          <SheetHeader className="px-6 pt-6 pb-2">
-            <SheetTitle className="text-2xl font-bold text-zinc-900">Filtros</SheetTitle>
-            <SheetDescription className="text-base text-zinc-500">
-              Refine sua busca por categoria.
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="flex-1 overflow-y-auto px-6 py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <MarketplaceFilterForm {...formProps} Separator={SheetSeparator} />
+      {mostrarSubfiltrosVeiculo ? (
+        <div className="rounded-2xl border border-zinc-200/80 bg-white/70 p-4 sm:p-5">
+          <h3 className="mb-4 text-[13px] font-semibold uppercase tracking-wide text-zinc-500">
+            Refinar busca por automóveis
+          </h3>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Select
+              value={filters.tipo ?? ""}
+              onValueChange={(v) => updateSubFilter({ tipo: v || undefined })}
+              options={TIPO_VEICULO_OPTIONS}
+              placeholder="Tipo de veículo"
+            />
+            <Select
+              value={filters.condicao ?? ""}
+              onValueChange={(v) => updateSubFilter({ condicao: v || undefined })}
+              options={CONDICAO_VEICULO_OPTIONS}
+              placeholder="Condição"
+            />
+            <Select
+              value={filters.combustivel ?? ""}
+              onValueChange={(v) => updateSubFilter({ combustivel: v || undefined })}
+              options={COMBUSTIVEL_VEICULO_OPTIONS}
+              placeholder="Combustível"
+            />
+            <Select
+              value={filters.cambio ?? ""}
+              onValueChange={(v) => updateSubFilter({ cambio: v || undefined })}
+              options={CAMBIO_VEICULO_OPTIONS}
+              placeholder="Câmbio"
+            />
           </div>
-
-          <div className="border-t border-zinc-100 p-6 pt-4">{footer}</div>
-        </SheetContent>
-      </Sheet>
-    </>
+        </div>
+      ) : null}
+    </div>
   );
 }

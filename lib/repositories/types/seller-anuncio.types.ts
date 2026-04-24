@@ -1,6 +1,7 @@
 export type TipoMidiaAnuncioApi = "FOTO" | "VIDEO";
 
 export type CategoriaAnuncioApi =
+  | "VEICULOS"
   | "IMOVEIS"
   | "CELULARES_E_TELEFONIA"
   | "CASA_DECORACAO_E_UTENSILIOS"

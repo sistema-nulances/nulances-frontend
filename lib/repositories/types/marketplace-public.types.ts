@@ -2,6 +2,10 @@ export type ListarAnunciosPublicosRequest = {
   /** Filtro por modelo (backend). */
   busca?: string;
   categoria?: string;
+  tipo?: string;
+  condicao?: string;
+  combustivel?: string;
+  cambio?: string;
   page?: number;
   size?: number;
 };
