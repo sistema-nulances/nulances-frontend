@@ -371,7 +371,6 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
       setUploadStatus("Salvando anúncio...");
       const payload: CriarAnuncioRequest = {
         categoria: categoria as CategoriaAnuncioApi,
-        marca: isVeiculo ? marca.trim() : "",
         modelo: modelo.trim(),
         preco: precoNumber,
         cidade: cidade.trim(),
@@ -379,6 +378,7 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
         midias,
       };
       if (isVeiculo) {
+        if (marca.trim()) payload.marca = marca.trim();
         payload.tipo = tipo as import("@/lib/repositories/types/seller-anuncio.types").TipoVeiculoAnuncioApi || undefined;
         payload.condicao = condicao as import("@/lib/repositories/types/seller-anuncio.types").CondicaoAnuncioVeiculoApi || undefined;
         if (ano.trim()) {

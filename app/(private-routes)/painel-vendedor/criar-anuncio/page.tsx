@@ -304,7 +304,6 @@ export default function SellerCriarAnuncioPage() {
       setUploadStatus("Salvando anúncio...");
       const payload: CriarAnuncioRequest = {
         categoria,
-        marca: isVeiculo ? marca.trim() : "",
         modelo: modelo.trim(),
         preco: precoNumber,
         cidade: cidade.trim(),
@@ -313,6 +312,7 @@ export default function SellerCriarAnuncioPage() {
       };
 
       if (isVeiculo) {
+        if (marca) payload.marca = marca.trim();
         payload.tipo = tipo as TipoVeiculoAnuncioApi;
         payload.condicao = condicao as CondicaoAnuncioVeiculoApi;
         payload.ano = anoNumber;

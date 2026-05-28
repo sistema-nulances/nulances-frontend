@@ -109,7 +109,7 @@ export type EditarAnuncioDetalheTecnicoRequest = Partial<{
 
 export type CriarAnuncioRequest = {
   categoria: CategoriaAnuncioApi;
-  marca: string;
+  marca?: string | null;
   modelo: string;
   preco: number;
   cidade: string;
