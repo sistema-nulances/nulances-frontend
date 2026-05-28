@@ -26,6 +26,7 @@ export type MarketplaceItem = {
   combustivel: string;
   local: string;
   preco: string;
+  descricao?: string;
   imagem?: string;
 };
 

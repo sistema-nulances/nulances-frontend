@@ -53,11 +53,17 @@ function statusMeta(status: MarketplaceItem["status"]) {
 
 type MarketplaceCardItem = MarketplaceItem & { midias?: MarketplaceRenderableMedia[] };
 
+function isVeiculoCategoria(categoria: string): boolean {
+  const c = String(categoria ?? "").toUpperCase();
+  return c === "VEICULOS" || c === "CARROS" || c === "MOTOS" || c === "CAMINHOES";
+}
+
 export function MarketplaceCarCard({ item }: { item: MarketplaceCardItem }) {
   const router = useRouter();
   const meta = categoryMeta(item.categoria);
   const sm = statusMeta(item.status);
   const mediaPreview = item.midias?.[0];
+  const isVeiculo = isVeiculoCategoria(item.categoria);
 
   return (
     <article
@@ -107,12 +113,14 @@ export function MarketplaceCarCard({ item }: { item: MarketplaceCardItem }) {
 
           <div className="min-w-0">
             <div className="flex items-start gap-2.5">
-              <BemMarcaLogo
-                nome={item.titulo}
-                marca={item.marca}
-                size="sm"
-                className="mt-0.5 text-zinc-700 [&_svg]:!h-7 [&_svg]:!w-7"
-              />
+              {isVeiculo ? (
+                <BemMarcaLogo
+                  nome={item.titulo}
+                  marca={item.marca}
+                  size="sm"
+                  className="mt-0.5 text-zinc-700 [&_svg]:!h-7 [&_svg]:!w-7"
+                />
+              ) : null}
               <h3 className="line-clamp-2 text-[20px] leading-[1.15] font-semibold tracking-[-0.02em] text-zinc-950">
                 {item.titulo}
               </h3>
@@ -129,38 +137,54 @@ export function MarketplaceCarCard({ item }: { item: MarketplaceCardItem }) {
               <span className="truncate">{item.local}</span>
             </div>
 
-            <div className="mt-3 grid grid-cols-1 gap-y-2">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Ano</p>
-                <p className="mt-1 truncate text-sm font-semibold text-zinc-900">{item.ano}</p>
+            {isVeiculo ? (
+              <div className="mt-3 grid grid-cols-1 gap-y-2">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Ano</p>
+                  <p className="mt-1 truncate text-sm font-semibold text-zinc-900">{item.ano}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">KM</p>
+                  <p className="mt-1 truncate text-sm font-semibold text-zinc-900">{item.km}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Marca / Modelo</p>
+                  <p className="mt-1 truncate text-sm font-semibold text-zinc-900">{item.marca} {item.modelo}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Câmbio</p>
+                  <p className="mt-1 truncate text-sm font-semibold text-zinc-900">
+                    {formatEnumDisplayLabel(item.cambio)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Combustível</p>
+                  <p className="mt-1 truncate text-sm font-semibold text-zinc-900">
+                    {formatEnumDisplayLabel(item.combustivel)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Condição</p>
+                  <p className="mt-1 truncate text-sm font-semibold text-zinc-900">
+                    {formatEnumDisplayLabel(item.condicao)}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">KM</p>
-                <p className="mt-1 truncate text-sm font-semibold text-zinc-900">{item.km}</p>
+            ) : (
+              <div className="mt-3 space-y-2">
+                {item.condicao && (item.condicao as string) !== "—" ? (
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Condição</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-zinc-900">
+                      {formatEnumDisplayLabel(item.condicao)}
+                    </p>
+                  </div>
+                ) : null}
+                {item.descricao ? (
+                  <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-zinc-600">{item.descricao}</p>
+                ) : null}
               </div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Marca / Modelo</p>
-                <p className="mt-1 truncate text-sm font-semibold text-zinc-900">{item.marca} {item.modelo}</p>
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Câmbio</p>
-                <p className="mt-1 truncate text-sm font-semibold text-zinc-900">
-                  {formatEnumDisplayLabel(item.cambio)}
-                </p>
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Combustível</p>
-                <p className="mt-1 truncate text-sm font-semibold text-zinc-900">
-                  {formatEnumDisplayLabel(item.combustivel)}
-                </p>
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Condição</p>
-                <p className="mt-1 truncate text-sm font-semibold text-zinc-900">
-                  {formatEnumDisplayLabel(item.condicao)}
-                </p>
-              </div>
-            </div>
+            )}
 
             <div className="mt-4">
               <Button

@@ -21,6 +21,7 @@ export type AnuncioPublicoListResponse = {
   id: string;
   categoria?: string | null;
   modelo?: string | null;
+  descricao?: string | null;
   marcaVeiculo?: string | null;
   preco?: number | null;
   cidade?: string | null;

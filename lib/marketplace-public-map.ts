@@ -129,6 +129,7 @@ export function mapAnuncioPublicoListToMarketplaceItem(
     combustivel: labelCombustivelApi(row.combustivel) || "—",
     local: cidade,
     preco: formatPrecoBRL(row.preco == null ? undefined : Number(row.preco)),
+    descricao: String(row.descricao ?? "").trim() || undefined,
     imagem: pickCapaImagem(row),
     midias,
   };
