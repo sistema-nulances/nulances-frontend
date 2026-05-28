@@ -26,10 +26,11 @@ import {
 } from "@/lib/admin-leiloes";
 import { cn } from "@/lib/cn";
 import { listarComitentesAdmin } from "@/lib/repositories/admin-comitentes-repository";
-import { criarLeilaoAdmin, listarLeiloesAdmin } from "@/lib/repositories/admin-leiloes-repository";
+import { criarLeilaoAdmin, excluirLeilaoAdmin, listarLeiloesAdmin } from "@/lib/repositories/admin-leiloes-repository";
 import { listarLeiloeirosAdmin } from "@/lib/repositories/admin-leiloeiros-repository";
 import { buscarLoteAdminPorId, listarLotesAdmin } from "@/lib/repositories/admin-lotes-repository";
 import type { LeilaoCreateRequest } from "@/lib/repositories/types/leilao.types";
+import { ConfirmDialog } from "@/components/ui/dialog";
 
 const PAGE_SIZE = 6;
 
@@ -54,6 +55,7 @@ export default function AdminLeiloesPage() {
   const [leiloeiroOptions, setLeiloeiroOptions] = React.useState<NovoLeilaoSimpleOption[]>([]);
   const [comitenteOptions, setComitenteOptions] = React.useState<NovoLeilaoSimpleOption[]>([]);
   const [loteOptions, setLoteOptions] = React.useState<NovoLeilaoLoteOption[]>([]);
+  const [deleteTarget, setDeleteTarget] = React.useState<LeilaoAdmin | null>(null);
 
   const stats = React.useMemo(() => buildLeilaoStats(rows), [rows]);
 
@@ -139,8 +141,43 @@ export default function AdminLeiloesPage() {
   const rangeStart = filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const rangeEnd = Math.min(page * PAGE_SIZE, filtered.length);
 
+  const handleConfirmDelete = React.useCallback(async () => {
+    if (!deleteTarget) return;
+    const row = deleteTarget;
+    try {
+      await excluirLeilaoAdmin(row.id);
+      toast({ type: "success", title: "Leilão excluído", description: `"${row.titulo}" foi removido.` });
+      await refreshLeiloes();
+    } catch (e) {
+      toast({
+        type: "error",
+        title: "Não foi possível excluir",
+        description: e instanceof Error ? e.message : "Tente novamente.",
+      });
+    } finally {
+      setDeleteTarget(null);
+    }
+  }, [deleteTarget, refreshLeiloes, toast]);
+
   return (
     <>
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Excluir leilão?"
+        description={
+          deleteTarget ? (
+            <>
+              O leilão <span className="font-medium text-zinc-800">{deleteTarget.titulo}</span> será removido
+              permanentemente junto com seus lotes vinculados e lances.
+            </>
+          ) : null
+        }
+        cancelLabel="Cancelar"
+        confirmLabel="Excluir"
+        confirmVariant="destructive"
+        onConfirm={handleConfirmDelete}
+      />
       <NovoLeilaoSheet
         open={novoOpen}
         onClose={() => setNovoOpen(false)}
@@ -245,7 +282,7 @@ export default function AdminLeiloesPage() {
           <ul className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3">
             {pageSlice.map((leilao) => (
               <li key={leilao.id}>
-                <LeilaoCard leilao={leilao} />
+                <LeilaoCard leilao={leilao} onDelete={setDeleteTarget} />
               </li>
             ))}
           </ul>

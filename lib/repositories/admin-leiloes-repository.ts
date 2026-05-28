@@ -93,3 +93,7 @@ export async function buscarItemLeilaoPublicoPorId(itemId: string): Promise<Leil
 export async function criarLeilaoAdmin(body: LeilaoCreateRequest): Promise<LeilaoResponse> {
   return apiFetch<LeilaoResponse>("/admin/leiloes", { method: "POST", body: JSON.stringify(body) });
 }
+
+export async function excluirLeilaoAdmin(id: string): Promise<void> {
+  return apiFetch<void>(`/admin/leiloes/${encodeURIComponent(id)}`, { method: "DELETE" });
+}

@@ -486,16 +486,6 @@ export function BensItensPageContent() {
   const handleConfirmDelete = React.useCallback(async () => {
     if (!deleteTarget) return;
     const row = deleteTarget;
-    const status = resolveStatus(row);
-    if (status.id !== "DISPONIVEL") {
-      setDeleteTarget(null);
-      toast({
-        type: "warning",
-        title: "Exclusão bloqueada",
-        description: "Somente bens com status Disponível podem ser excluídos do catálogo.",
-      });
-      return;
-    }
     if (isPersistedBemId(row.id)) {
       try {
         await excluirBemAdmin(row.id);
@@ -519,7 +509,7 @@ export function BensItensPageContent() {
       title: "Bem excluído",
       description: `"${row.nome}" foi removido do catálogo.`,
     });
-  }, [deleteTarget, loadList, refreshFromApi, resolveStatus, setItems, toast]);
+  }, [deleteTarget, loadList, refreshFromApi, setItems, toast]);
 
   const handleConfirmRemoveFromLote = React.useCallback(async () => {
     const bem = removeFromLoteTarget;
@@ -727,7 +717,6 @@ export function BensItensPageContent() {
         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {paginated.map((bem) => {
             const status = resolveStatus(bem);
-            const podeExcluirCatalogo = status.id === "DISPONIVEL";
             const podeRemoverDoLote = status.id === "EM_UM_LOTE";
             const podeEditar = status.id === "DISPONIVEL";
             return (
@@ -808,14 +797,9 @@ export function BensItensPageContent() {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="rounded-full text-red-700 hover:bg-red-50 hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-45"
+                      className="rounded-full text-red-700 hover:bg-red-50 hover:text-red-800"
                       onClick={() => setDeleteTarget(bem)}
-                      disabled={!podeExcluirCatalogo}
-                      title={
-                        podeExcluirCatalogo
-                          ? "Excluir bem"
-                          : "Só é possível excluir do catálogo quando o status está Disponível."
-                      }
+                      title="Excluir bem permanentemente"
                     >
                       <TrashIcon className="h-4 w-4" aria-hidden />
                       Excluir
@@ -855,7 +839,7 @@ export function BensItensPageContent() {
               : undefined
           }
           onDelete={
-            sheet.mode === "view" && resolveStatus(sheet.bem).id === "DISPONIVEL"
+            sheet.mode === "view"
               ? (id) => {
                   const b = catalogItems.find((x) => x.id === id) ?? sheet?.bem;
                   if (b) setDeleteTarget(b);

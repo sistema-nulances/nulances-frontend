@@ -11,8 +11,10 @@ import {
   PackageIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { TrashIcon } from "@heroicons/react/24/outline";
 import type { LeilaoAdmin } from "@/data/leiloes-admin";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { getStatusLabel } from "@/utils/status-auction";
 import { cn } from "@/lib/cn";
 
@@ -34,7 +36,13 @@ function statusBadgeVariant(
   return "zinc";
 }
 
-export function LeilaoCard({ leilao }: { leilao: LeilaoAdmin }) {
+export function LeilaoCard({
+  leilao,
+  onDelete,
+}: {
+  leilao: LeilaoAdmin;
+  onDelete?: (leilao: LeilaoAdmin) => void;
+}) {
   return (
     <article
       className={cn(
@@ -103,7 +111,7 @@ export function LeilaoCard({ leilao }: { leilao: LeilaoAdmin }) {
         </span>
       </div>
 
-      <div className="mt-5 flex flex-wrap gap-2 border-t border-zinc-100 pt-4">
+      <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-4">
         <Link
           href={`/admin/leiloes/${encodeURIComponent(leilao.id)}`}
           className={cn(
@@ -114,6 +122,18 @@ export function LeilaoCard({ leilao }: { leilao: LeilaoAdmin }) {
           Painel do leilão
           <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4" />
         </Link>
+        {onDelete ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="rounded-full text-red-700 hover:bg-red-50 hover:text-red-800"
+            onClick={() => onDelete(leilao)}
+          >
+            <TrashIcon className="h-4 w-4" aria-hidden />
+            Excluir
+          </Button>
+        ) : null}
       </div>
     </article>
   );

@@ -409,8 +409,8 @@ export default function AdminLotesPage() {
                     )}
                   </p>
 
-                  {disponivel ? (
-                    <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {disponivel ? (
                       <Button
                         type="button"
                         variant="default"
@@ -423,18 +423,18 @@ export default function AdminLotesPage() {
                         <PencilSquareIcon className="h-4 w-4" aria-hidden />
                         Editar
                       </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="rounded-full text-red-700 hover:bg-red-50 hover:text-red-800"
-                        onClick={() => setDeleteTarget(lote)}
-                      >
-                        <TrashIcon className="h-4 w-4" aria-hidden />
-                        Excluir
-                      </Button>
-                    </div>
-                  ) : null}
+                    ) : null}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="rounded-full text-red-700 hover:bg-red-50 hover:text-red-800"
+                      onClick={() => setDeleteTarget(lote)}
+                    >
+                      <TrashIcon className="h-4 w-4" aria-hidden />
+                      Excluir
+                    </Button>
+                  </div>
 
                   <div className={cn("flex flex-1 flex-col justify-end pt-2", disponivel ? "mt-3" : "mt-5")}>
                     <Button
