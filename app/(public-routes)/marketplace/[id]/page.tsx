@@ -172,6 +172,7 @@ export default function MarketplaceAdDetailPage() {
     setCarouselStart(0);
   }, [id]);
 
+  const isVeiculo = String(effectiveMarketplaceItem.categoria ?? "").toUpperCase() === "VEICULOS";
   const anoFabMod = buildAnoFabMod(effectiveMarketplaceItem);
   const cor = detail?.cor?.trim() || "N/A";
   const blindado = detail?.blindado ? "Sim" : "Não";
@@ -406,36 +407,38 @@ export default function MarketplaceAdDetailPage() {
                   </div>
                 </div>
 
-                <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4 sm:gap-x-8">
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500">Ano fab/mod</p>
-                    <p className="mt-1.5 text-[15px] font-semibold text-zinc-900">{anoFabMod}</p>
+                {isVeiculo ? (
+                  <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4 sm:gap-x-8">
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500">Ano fab/mod</p>
+                      <p className="mt-1.5 text-[15px] font-semibold text-zinc-900">{anoFabMod}</p>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500">KM</p>
+                      <p className="mt-1.5 text-[15px] font-semibold text-zinc-900">{kmValue}</p>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500">Câmbio</p>
+                      <p className="mt-1.5 text-[15px] font-semibold text-zinc-900">
+                        {formatEnumDisplayLabel(cambioValue)}
+                      </p>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500">Combustível</p>
+                      <p className="mt-1.5 text-[15px] font-semibold text-zinc-900">
+                        {formatEnumDisplayLabel(combustivelValue)}
+                      </p>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500">Cor</p>
+                      <p className="mt-1.5 text-[15px] font-semibold text-zinc-900">{cor}</p>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500">Blindado</p>
+                      <p className="mt-1.5 text-[15px] font-semibold text-zinc-900">{blindado}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500">KM</p>
-                    <p className="mt-1.5 text-[15px] font-semibold text-zinc-900">{kmValue}</p>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500">Câmbio</p>
-                    <p className="mt-1.5 text-[15px] font-semibold text-zinc-900">
-                      {formatEnumDisplayLabel(cambioValue)}
-                    </p>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500">Combustível</p>
-                    <p className="mt-1.5 text-[15px] font-semibold text-zinc-900">
-                      {formatEnumDisplayLabel(combustivelValue)}
-                    </p>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500">Cor</p>
-                    <p className="mt-1.5 text-[15px] font-semibold text-zinc-900">{cor}</p>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500">Blindado</p>
-                    <p className="mt-1.5 text-[15px] font-semibold text-zinc-900">{blindado}</p>
-                  </div>
-                </div>
+                ) : null}
 
                 <div className="mt-8 border-t border-zinc-100 pt-8">
                   <h2 className="text-lg font-bold text-zinc-900">Descrição</h2>
@@ -449,25 +452,47 @@ export default function MarketplaceAdDetailPage() {
 
               </div>
 
-              <div>
-                <h2 className="text-[22px] font-bold tracking-[-0.02em] text-zinc-900">Ficha técnica</h2>
-                <p className="mt-1 text-sm text-zinc-500">
-                  Dados agregados do anúncio e referências típicas de fabricante. Confirme sempre com o vendedor e a
-                  documentação.
-                </p>
-                <Accordion className="mt-2">
-                  {techSheetSections.map((section, i) => (
-                    <AccordionItem
-                      key={section.title}
-                      title={section.title}
-                      variant="plain"
-                      defaultOpen={i === 0}
-                    >
-                      <TechSpecGrid rows={section.rows} />
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              </div>
+              {isVeiculo ? (
+                <div>
+                  <h2 className="text-[22px] font-bold tracking-[-0.02em] text-zinc-900">Ficha técnica</h2>
+                  <p className="mt-1 text-sm text-zinc-500">
+                    Dados agregados do anúncio e referências típicas de fabricante. Confirme sempre com o vendedor e a
+                    documentação.
+                  </p>
+                  <Accordion className="mt-2">
+                    {techSheetSections.map((section, i) => (
+                      <AccordionItem
+                        key={section.title}
+                        title={section.title}
+                        variant="plain"
+                        defaultOpen={i === 0}
+                      >
+                        <TechSpecGrid rows={section.rows} />
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                </div>
+              ) : (
+                <div>
+                  <h2 className="text-[22px] font-bold tracking-[-0.02em] text-zinc-900">Informações do anúncio</h2>
+                  <div className="mt-4 rounded-2xl border border-zinc-200 bg-white p-5">
+                    <dl className="grid grid-cols-1 gap-x-10 gap-y-4 sm:grid-cols-2">
+                      <div className="flex flex-col gap-1">
+                        <dt className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500">Título</dt>
+                        <dd className="text-[15px] font-medium text-zinc-900">{marketplaceItem.titulo}</dd>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <dt className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500">Condição</dt>
+                        <dd className="text-[15px] font-medium text-zinc-900">{marketplaceItem.condicao}</dd>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <dt className="text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500">Localização</dt>
+                        <dd className="text-[15px] font-medium text-zinc-900">{marketplaceItem.local}</dd>
+                      </div>
+                    </dl>
+                  </div>
+                </div>
+              )}
 
               <div className="rounded-3xl bg-white p-6 ring-1 ring-zinc-200 sm:p-8">
                 <div className="flex items-start gap-4">

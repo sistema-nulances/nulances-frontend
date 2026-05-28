@@ -29,26 +29,27 @@ import type {
 } from "@/lib/repositories/types/seller-anuncio.types";
 
 const CATEGORIA_OPTIONS: SelectOption[] = [
-  { value: "IMOVEIS", label: "Imóveis" },
-  { value: "CELULARES_E_TELEFONIA", label: "Celulares e telefonia" },
-  { value: "CASA_DECORACAO_E_UTENSILIOS", label: "Casa, decoração e utensílios" },
-  { value: "ESPORTES_E_FITNESS", label: "Esportes e fitness" },
-  { value: "SERVICOS", label: "Serviços" },
-  { value: "MODA_E_BELEZA", label: "Moda e beleza" },
-  { value: "ARTIGOS_INFANTIS", label: "Artigos infantis" },
-  { value: "ANIMAIS_DE_ESTIMACAO", label: "Animais de estimação" },
-  { value: "MUSICA_E_HOBBIES", label: "Música e hobbies" },
-  { value: "AGRO_E_INDUSTRIA", label: "Agro e indústria" },
-  { value: "VAGAS_DE_EMPREGO", label: "Vagas de emprego" },
-  { value: "COMERCIO", label: "Comércio" },
-  { value: "GAMES", label: "Games" },
-  { value: "TVS_E_VIDEO", label: "TVs e vídeo" },
-  { value: "AUDIO", label: "Áudio" },
-  { value: "INFORMATICA", label: "Informática" },
-  { value: "ELETRO", label: "Eletro" },
-  { value: "MOVEIS", label: "Móveis" },
-  { value: "MATERIAIS_DE_CONSTRUCAO", label: "Materiais de construção" },
-  { value: "ESCRITORIO_E_HOME_OFFICE", label: "Escritório e home office" },
+  { value: "VEICULOS", label: "🚗 Automóveis" },
+  { value: "IMOVEIS", label: "🏠 Imóveis" },
+  { value: "CELULARES_E_TELEFONIA", label: "📱 Celulares e telefonia" },
+  { value: "CASA_DECORACAO_E_UTENSILIOS", label: "🏡 Casa, decoração e utensílios" },
+  { value: "ESPORTES_E_FITNESS", label: "🏋️ Esportes e fitness" },
+  { value: "SERVICOS", label: "🛠️ Serviços" },
+  { value: "MODA_E_BELEZA", label: "💄 Moda e beleza" },
+  { value: "ARTIGOS_INFANTIS", label: "🧸 Artigos infantis" },
+  { value: "ANIMAIS_DE_ESTIMACAO", label: "🐾 Animais de estimação" },
+  { value: "MUSICA_E_HOBBIES", label: "🎵 Música e hobbies" },
+  { value: "AGRO_E_INDUSTRIA", label: "🌾 Agro e indústria" },
+  { value: "VAGAS_DE_EMPREGO", label: "💼 Vagas de emprego" },
+  { value: "COMERCIO", label: "🏪 Comércio" },
+  { value: "GAMES", label: "🎮 Games" },
+  { value: "TVS_E_VIDEO", label: "📺 TVs e vídeo" },
+  { value: "AUDIO", label: "🎧 Áudio" },
+  { value: "INFORMATICA", label: "💻 Informática" },
+  { value: "ELETRO", label: "🔌 Eletro" },
+  { value: "MOVEIS", label: "🪑 Móveis" },
+  { value: "MATERIAIS_DE_CONSTRUCAO", label: "🧱 Materiais de construção" },
+  { value: "ESCRITORIO_E_HOME_OFFICE", label: "🖇️ Escritório e home office" },
 ];
 
 const TIPO_OPTIONS: SelectOption[] = [
@@ -275,24 +276,28 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
     }
   }, [open, resetForm]);
 
+  const isVeiculo = categoria === "VEICULOS";
+
   const marcaNomeExibicao = React.useMemo(() => {
-    const label = marcaVeiculoLabel(marca.trim()) || "Veículo";
+    if (!isVeiculo) return modelo.trim();
+    const label = marcaVeiculoLabel(marca.trim()) || "";
     const modeloLimpo = modelo.trim();
     const anoLimpo = ano.trim();
     return [label, modeloLimpo, anoLimpo].filter(Boolean).join(" ");
-  }, [ano, marca, modelo]);
+  }, [ano, isVeiculo, marca, modelo]);
 
-  const canSubmit = React.useMemo(
-    () =>
-      categoria &&
-      marca.trim() &&
-      modelo.trim() &&
-      precoDigits &&
-      cidade.trim() &&
-      descricao.trim() &&
-      midiaFiles.length > 0,
-    [categoria, cidade, descricao, marca, midiaFiles.length, modelo, precoDigits]
-  );
+  const canSubmit = React.useMemo(() => {
+    const base =
+      !!categoria &&
+      modelo.trim().length > 0 &&
+      !!precoDigits &&
+      cidade.trim().length > 0 &&
+      descricao.trim().length > 0 &&
+      midiaFiles.length > 0;
+    if (!base) return false;
+    if (isVeiculo) return !!marca.trim();
+    return true;
+  }, [categoria, cidade, descricao, isVeiculo, marca, midiaFiles.length, modelo, precoDigits]);
   const midiaPreviewUrls = React.useMemo(
     () => midiaFiles.map((file) => URL.createObjectURL(file)),
     [midiaFiles]
@@ -366,13 +371,30 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
       setUploadStatus("Salvando anúncio...");
       const payload: CriarAnuncioRequest = {
         categoria: categoria as CategoriaAnuncioApi,
-        marca: marca.trim(),
+        marca: isVeiculo ? marca.trim() : "",
         modelo: modelo.trim(),
         preco: precoNumber,
         cidade: cidade.trim(),
         descricao: descricao.trim(),
         midias,
       };
+      if (isVeiculo) {
+        payload.tipo = tipo as import("@/lib/repositories/types/seller-anuncio.types").TipoVeiculoAnuncioApi || undefined;
+        payload.condicao = condicao as import("@/lib/repositories/types/seller-anuncio.types").CondicaoAnuncioVeiculoApi || undefined;
+        if (ano.trim()) {
+          const [fab] = ano.split("/");
+          const anoNum = Number(fab?.trim());
+          if (Number.isFinite(anoNum) && anoNum > 1900) payload.ano = anoNum;
+        }
+        if (quilometragemDigits) payload.quilometragem = Number(quilometragemDigits);
+        payload.combustivel = combustivel as import("@/lib/repositories/types/seller-anuncio.types").CombustivelVeiculoApi || undefined;
+        payload.cambio = cambio as import("@/lib/repositories/types/seller-anuncio.types").CambioVeiculoApi || undefined;
+        if (finalChassi.trim()) payload.finalChassi = finalChassi.trim();
+        if (cor.trim()) payload.cor = cor.trim();
+        payload.blindado = blindado;
+        if (placaVeiculo.trim()) payload.placaVeiculo = placaVeiculo.trim();
+        payload.detalheTecnico = EMPTY_DETALHE_TECNICO;
+      }
       await criarAnuncioVendedor(payload);
 
       toast({
@@ -401,7 +423,11 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
       <SheetContent className="max-w-[min(100vw-1rem,840px)] !w-full" onClose={onClose}>
         <SheetHeader>
           <SheetTitle>Criar anúncio</SheetTitle>
-          <SheetDescription>Preencha os dados do veículo e envie as mídias para análise.</SheetDescription>
+          <SheetDescription>
+            {isVeiculo
+              ? "Preencha os dados do veículo e envie as mídias para análise."
+              : "Preencha os dados do item ou serviço e envie as mídias para análise."}
+          </SheetDescription>
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-5 pb-4">
@@ -421,24 +447,26 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
               </div>
             </div>
 
-            <div className="sm:col-span-2 flex flex-col gap-3 sm:flex-row sm:items-start">
-              <BemMarcaLogo nome={marcaNomeExibicao} marca={marca} className="sm:pt-1" />
-              <div className="min-w-0 flex-1">
-                <LabelObrigatoria htmlFor="sheet-marca">Marca</LabelObrigatoria>
-                <SelectSearch
-                  id="sheet-marca"
-                  value={marca}
-                  onValueChange={setMarca}
-                  options={BEM_MARCA_VEICULO_OPTIONS}
-                  placeholder="Selecione a marca"
-                  searchPlaceholder="Buscar marca…"
-                  emptyMessage="Nenhuma marca encontrada."
-                  aria-label="Marca do veículo"
-                  variant="flat"
-                  className="mt-1.5"
-                />
+            {isVeiculo ? (
+              <div className="sm:col-span-2 flex flex-col gap-3 sm:flex-row sm:items-start">
+                <BemMarcaLogo nome={marcaNomeExibicao} marca={marca} className="sm:pt-1" />
+                <div className="min-w-0 flex-1">
+                  <LabelObrigatoria htmlFor="sheet-marca">Marca</LabelObrigatoria>
+                  <SelectSearch
+                    id="sheet-marca"
+                    value={marca}
+                    onValueChange={setMarca}
+                    options={BEM_MARCA_VEICULO_OPTIONS}
+                    placeholder="Selecione a marca"
+                    searchPlaceholder="Buscar marca…"
+                    emptyMessage="Nenhuma marca encontrada."
+                    aria-label="Marca do veículo"
+                    variant="flat"
+                    className="mt-1.5"
+                  />
+                </div>
               </div>
-            </div>
+            ) : null}
 
             <div>
               <LabelObrigatoria htmlFor="sheet-modelo">Modelo</LabelObrigatoria>
@@ -481,114 +509,97 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
                 className="mt-1.5"
               />
             </div>
-            <div>
-              <Label htmlFor="sheet-ano">Ano</Label>
-              <Input
-                id="sheet-ano"
-                value={ano}
-                onChange={(e) => setAno(normalizeAnoInput(e.target.value))}
-                inputMode="numeric"
-                maxLength={9}
-                className="mt-1.5"
-                placeholder="Ex.: 2022/2023"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="sheet-tipo">Tipo</Label>
-              <Select
-                id="sheet-tipo"
-                value={tipo}
-                onValueChange={setTipo}
-                options={TIPO_OPTIONS}
-                placeholder="Selecione o tipo"
-                className="mt-1.5"
-              />
-            </div>
-            <div>
-              <Label htmlFor="sheet-condicao">Condição</Label>
-              <Select
-                id="sheet-condicao"
-                value={condicao}
-                onValueChange={setCondicao}
-                options={CONDICAO_OPTIONS}
-                placeholder="Selecione a condição"
-                className="mt-1.5"
-              />
-            </div>
-            <div>
-              <Label htmlFor="sheet-comb">Combustível</Label>
-              <Select
-                id="sheet-comb"
-                value={combustivel}
-                onValueChange={setCombustivel}
-                options={COMBUSTIVEL_OPTIONS}
-                placeholder="Selecione o combustível"
-                className="mt-1.5"
-              />
-            </div>
-            <div>
-              <Label htmlFor="sheet-cambio">Câmbio</Label>
-              <Select
-                id="sheet-cambio"
-                value={cambio}
-                onValueChange={setCambio}
-                options={CAMBIO_OPTIONS}
-                placeholder="Selecione o câmbio"
-                className="mt-1.5"
-              />
-            </div>
-            <div>
-              <Label htmlFor="sheet-km">Quilometragem</Label>
-              <Input
-                id="sheet-km"
-                value={formatKmDisplay(quilometragemDigits)}
-                onChange={(e) => setQuilometragemDigits(normalizeKmInput(e.target.value))}
-                inputMode="numeric"
-                className="mt-1.5"
-                placeholder="Ex.: 48.320"
-              />
-            </div>
-            <div className="sm:col-span-2 hidden">
-              <Label htmlFor="sheet-placa">Placa</Label>
-              <Input
-                id="sheet-placa"
-                value={placaVeiculo}
-                onChange={(e) => setPlacaVeiculo(normalizePlacaInput(e.target.value))}
-                className={cn("mt-1.5 rounded-2xl font-mono uppercase tracking-wider")}
-                placeholder="ABC1D23 ou ABC1234"
-                maxLength={7}
-                aria-describedby="sheet-placa-hint"
-              />
-              <p id="sheet-placa-hint" className="mt-1 text-xs text-zinc-500">
-                Mercosul (7 caracteres) ou formato antigo (3 letras + 4 números).
-              </p>
-              <div className="mt-3 rounded-2xl border border-zinc-200 px-3 py-4">
-                <div className="flex justify-center sm:justify-start">
-                  <LicensePlate plate={placaVeiculo} className="max-w-[340px]" />
+            {isVeiculo ? (
+              <>
+                <div>
+                  <Label htmlFor="sheet-ano">Ano</Label>
+                  <Input
+                    id="sheet-ano"
+                    value={ano}
+                    onChange={(e) => setAno(normalizeAnoInput(e.target.value))}
+                    inputMode="numeric"
+                    maxLength={9}
+                    className="mt-1.5"
+                    placeholder="Ex.: 2022/2023"
+                  />
                 </div>
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="sheet-chassi">Final do chassi</Label>
-              <Input
-                id="sheet-chassi"
-                value={finalChassi}
-                onChange={(e) => setFinalChassi(e.target.value)}
-                className="mt-1.5"
-                placeholder="Ex.: 9283"
-              />
-            </div>
-            <div>
-              <Label htmlFor="sheet-cor">Cor</Label>
-              <Input
-                id="sheet-cor"
-                value={cor}
-                onChange={(e) => setCor(e.target.value)}
-                className="mt-1.5"
-                placeholder="Ex.: Branco"
-              />
-            </div>
+                <div>
+                  <Label htmlFor="sheet-tipo">Tipo</Label>
+                  <Select
+                    id="sheet-tipo"
+                    value={tipo}
+                    onValueChange={setTipo}
+                    options={TIPO_OPTIONS}
+                    placeholder="Selecione o tipo"
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="sheet-condicao">Condição</Label>
+                  <Select
+                    id="sheet-condicao"
+                    value={condicao}
+                    onValueChange={setCondicao}
+                    options={CONDICAO_OPTIONS}
+                    placeholder="Selecione a condição"
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="sheet-comb">Combustível</Label>
+                  <Select
+                    id="sheet-comb"
+                    value={combustivel}
+                    onValueChange={setCombustivel}
+                    options={COMBUSTIVEL_OPTIONS}
+                    placeholder="Selecione o combustível"
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="sheet-cambio">Câmbio</Label>
+                  <Select
+                    id="sheet-cambio"
+                    value={cambio}
+                    onValueChange={setCambio}
+                    options={CAMBIO_OPTIONS}
+                    placeholder="Selecione o câmbio"
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="sheet-km">Quilometragem</Label>
+                  <Input
+                    id="sheet-km"
+                    value={formatKmDisplay(quilometragemDigits)}
+                    onChange={(e) => setQuilometragemDigits(normalizeKmInput(e.target.value))}
+                    inputMode="numeric"
+                    className="mt-1.5"
+                    placeholder="Ex.: 48.320"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="sheet-chassi">Final do chassi</Label>
+                  <Input
+                    id="sheet-chassi"
+                    value={finalChassi}
+                    onChange={(e) => setFinalChassi(e.target.value)}
+                    className="mt-1.5"
+                    placeholder="Ex.: 9283"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="sheet-cor">Cor</Label>
+                  <Input
+                    id="sheet-cor"
+                    value={cor}
+                    onChange={(e) => setCor(e.target.value)}
+                    className="mt-1.5"
+                    placeholder="Ex.: Branco"
+                  />
+                </div>
+              </>
+            ) : null}
 
             <div className="sm:col-span-2">
               <LabelObrigatoria htmlFor="sheet-descricao">Descrição</LabelObrigatoria>
@@ -601,17 +612,19 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
                   "mt-1.5 w-full rounded-2xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--nulance-purple)]/35"
                 )}
-                placeholder="Descreva o veículo, estado geral e diferenciais."
+                placeholder={isVeiculo ? "Descreva o veículo, estado geral e diferenciais." : "Descreva o item ou serviço, incluindo características, condição e diferenciais."}
                 required
               />
             </div>
 
-            <div className="sm:col-span-2">
-              <p className="text-sm font-semibold text-zinc-900">Detalhe técnico</p>
-              <p className="mt-1 text-xs text-zinc-500">
-                Preencha os campos da ficha técnica enviados para a API.
-              </p>
-            </div>
+            {isVeiculo ? (
+              <div className="sm:col-span-2">
+                <p className="text-sm font-semibold text-zinc-900">Detalhe técnico</p>
+                <p className="mt-1 text-xs text-zinc-500">
+                  Preencha os campos da ficha técnica enviados para a API.
+                </p>
+              </div>
+            ) : null}
 
             {false && DETALHE_FIELDS.map((field) => (
               <div key={field.key} className={field.rows ? "sm:col-span-2" : undefined}>
@@ -650,10 +663,12 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
               </div>
             ))}
 
-            <label className="sm:col-span-2 hidden items-center gap-2 text-sm text-zinc-700">
-              <input type="checkbox" checked={blindado} onChange={(e) => setBlindado(e.target.checked)} className="h-4 w-4 rounded border-zinc-300" />
-              Veículo blindado
-            </label>
+            {isVeiculo ? (
+              <label className="sm:col-span-2 inline-flex items-center gap-2 text-sm text-zinc-700">
+                <input type="checkbox" checked={blindado} onChange={(e) => setBlindado(e.target.checked)} className="h-4 w-4 rounded border-zinc-300" />
+                Veículo blindado
+              </label>
+            ) : null}
 
             <div className="sm:col-span-2">
               <LabelObrigatoria htmlFor="sheet-midias-imagem">Mídias</LabelObrigatoria>
