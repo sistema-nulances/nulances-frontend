@@ -12,7 +12,6 @@ import {
   DocumentAttachmentIcon,
 } from "@hugeicons/core-free-icons";
 import { AdminSidebarLink } from "@/components/admin/sidebar/admin-sidebar-link";
-import { AdminProfileCard } from "@/components/admin/sidebar/admin-profile-card";
 
 type AdminMainNavProps = {
   pathname: string;
@@ -79,7 +78,7 @@ export function AdminMainNav({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <nav className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-0 pb-2">
+      <nav className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-0 pb-4">
         <div className="space-y-1 pr-1">
           {navItems.map((item) => (
             <AdminSidebarLink
@@ -93,16 +92,6 @@ export function AdminMainNav({
           ))}
         </div>
       </nav>
-
-      <div className="shrink-0 border-t border-zinc-100 bg-white px-1 pb-4 pt-3">
-        <AdminProfileCard
-          href={isMarketplace ? "/admin/marketplace/perfil" : "/admin/perfil"}
-          active={active(isMarketplace ? "/admin/marketplace/perfil" : "/admin/perfil")}
-          name="Pietro"
-          subtitle="Conta ativa"
-          onNavigate={onNavigate}
-        />
-      </div>
     </div>
   );
 }

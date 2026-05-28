@@ -7,7 +7,6 @@ import Link from "next/link";
 
 import { Logo } from "@/components/ui/logo";
 import { AdminSidebarLink } from "@/components/admin/sidebar/admin-sidebar-link";
-import { AdminProfileCard } from "@/components/admin/sidebar/admin-profile-card";
 
 type SellerNavItem = {
   href: string;
@@ -32,7 +31,7 @@ export function SellerSidebar() {
         </div>
       </div>
 
-      <nav className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-0 pb-2">
+      <nav className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-0 pb-4">
         <div className="space-y-1 pr-1">
           {SELLER_ITEMS.map((item) => (
             <AdminSidebarLink
@@ -54,15 +53,6 @@ export function SellerSidebar() {
           <HugeiconsIcon icon={ArrowLeft01Icon} size={16} color="currentColor" strokeWidth={1.8} />
           Sair do painel
         </Link>
-      </div>
-
-      <div className="shrink-0 border-t border-zinc-100 bg-white px-1 pb-4 pt-3">
-        <AdminProfileCard
-          href="/profile"
-          active={pathname === "/profile" || pathname.startsWith("/profile/")}
-          name="Pietro"
-          subtitle="Conta vendedora"
-        />
       </div>
     </aside>
   );
