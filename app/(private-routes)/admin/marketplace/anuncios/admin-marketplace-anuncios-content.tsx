@@ -442,7 +442,7 @@ function labelCondicaoForSheet(raw: string | null | undefined): string {
 function mapAnuncioResponseToRow(response: AnuncioResponse): MarketplaceAnuncioAdmin {
   const marcaRaw = String(response.marca ?? "").trim();
   const marcaCode = normalizeMarcaVeiculoCode(marcaRaw);
-  const marcaLabel = marcaVeiculoLabel(marcaCode) || marcaRaw || "—";
+  const marcaLabel = marcaVeiculoLabel(marcaCode) || marcaRaw || "";
   const modelo = String(response.modelo ?? "").trim() || "Sem modelo";
   const titulo = [marcaLabel, modelo].filter(Boolean).join(" ").trim();
   const statusModeracao = mapSellerStatusToModeracao(response.status);
@@ -617,7 +617,7 @@ function mapRowToPatchRequest(next: MarketplaceAnuncioAdmin): EditarAnuncioReque
 
 function mapSellerApiToRow(item: AnuncioVendedorListResponse): MarketplaceAnuncioAdmin {
   const marcaCode = String(item.marcaVeiculo ?? "").trim();
-  const marcaLabel = marcaVeiculoLabel(marcaCode) || marcaCode || "—";
+  const marcaLabel = marcaVeiculoLabel(marcaCode) || marcaCode || "";
   const modelo = String(item.modelo ?? "").trim() || "Sem modelo";
   const titulo = [marcaLabel, modelo].filter(Boolean).join(" ").trim();
   const statusModeracao = mapSellerStatusToModeracao(item.status);
@@ -668,7 +668,7 @@ function mapSellerApiToRow(item: AnuncioVendedorListResponse): MarketplaceAnunci
 
 function mapAdminApiToRow(item: AnuncioAdminListResponse): MarketplaceAnuncioAdmin {
   const marcaCode = normalizeMarcaVeiculoCode(item.marcaVeiculo);
-  const marcaLabel = marcaVeiculoLabel(marcaCode) || String(item.marcaVeiculo ?? "").trim() || "—";
+  const marcaLabel = marcaVeiculoLabel(marcaCode) || String(item.marcaVeiculo ?? "").trim() || "";
   const modelo = String(item.modelo ?? "").trim() || "Sem modelo";
   const titulo = [marcaLabel, modelo].filter(Boolean).join(" ").trim();
   const statusModeracao = mapAdminStatusToModeracao(item.status);

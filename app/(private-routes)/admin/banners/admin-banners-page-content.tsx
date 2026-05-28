@@ -72,26 +72,71 @@ function nextSlideId(slides: HomeBannerSlide[]): number {
   return max + 1;
 }
 
-function BannerPreview({ slide, className }: { slide: HomeBannerSlide; className?: string }) {
+function BannerPreview({
+  slide,
+  className,
+  objectPosition,
+  onPickPosition,
+}: {
+  slide: HomeBannerSlide;
+  className?: string;
+  objectPosition?: string;
+  onPickPosition?: (pos: string) => void;
+}) {
   const isRemoteOrData =
     slide.image.startsWith("data:") ||
     slide.image.startsWith("blob:") ||
     slide.image.startsWith("http://") ||
     slide.image.startsWith("https://");
 
+  const pos = objectPosition ?? "50% 50%";
+  const [px, py] = pos.split(" ").map((v) => parseFloat(v) || 50);
+
+  function handleClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (!onPickPosition) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = Math.round(((e.clientX - rect.left) / rect.width) * 100);
+    const y = Math.round(((e.clientY - rect.top) / rect.height) * 100);
+    onPickPosition(`${x}% ${y}%`);
+  }
+
   return (
     <div
       className={cn(
-        "relative w-full rounded-xl border border-zinc-200 bg-zinc-100",
+        "relative w-full rounded-xl border border-zinc-200 bg-zinc-100 overflow-hidden",
         BANNER_PREVIEW_ASPECT,
+        onPickPosition ? "cursor-crosshair" : "",
         className
       )}
+      onClick={handleClick}
     >
       {isRemoteOrData ? (
         // eslint-disable-next-line @next/next/no-img-element -- data/blob e URLs arbitrárias
-        <img src={slide.image} alt="" className="h-full w-full object-cover" />
+        <img
+          src={slide.image}
+          alt=""
+          className="h-full w-full object-cover"
+          style={{ objectPosition: pos }}
+        />
       ) : (
-        <Image src={slide.image} alt="" fill className="object-cover" sizes="(min-width: 768px) 640px, 100vw" />
+        <Image
+          src={slide.image}
+          alt=""
+          fill
+          className="object-cover"
+          style={{ objectPosition: pos }}
+          sizes="(min-width: 768px) 640px, 100vw"
+        />
+      )}
+
+      {/* Indicador do ponto focal */}
+      {onPickPosition && (
+        <div
+          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-1/2"
+          style={{ left: `${px}%`, top: `${py}%` }}
+        >
+          <div className="h-5 w-5 rounded-full border-2 border-white bg-nulance-purple/80 shadow-md ring-1 ring-black/20" />
+        </div>
       )}
     </div>
   );
@@ -116,6 +161,8 @@ export function AdminBannersPageContent({ variant = "home" }: AdminBannersPageCo
   const [viewerOpen, setViewerOpen] = React.useState(false);
   const [viewerIndex, setViewerIndex] = React.useState(0);
   const [slides, setSlides] = React.useState<HomeBannerSlide[]>(cfg.defaults);
+  const [objectPositions, setObjectPositions] = React.useState<Record<string, string>>({});
+  const [savingPositionId, setSavingPositionId] = React.useState<string | null>(null);
   const replaceInputRefs = React.useRef<Record<string, HTMLInputElement | null>>({});
 
   React.useEffect(() => {
@@ -127,18 +174,12 @@ export function AdminBannersPageContent({ variant = "home" }: AdminBannersPageCo
     setApiLoading(true);
     try {
       const rows = await listarBannersAdmin();
-      setApiBanners(
-        rows
-          .filter((b) => b.tipo === bannerTipo)
-          .sort((a, b) => a.posicao - b.posicao || String(a.createdAt ?? "").localeCompare(String(b.createdAt ?? "")))
-      );
-      setAltDraft(
-        Object.fromEntries(
-          rows
-            .filter((b) => b.tipo === bannerTipo)
-            .map((b) => [b.id, b.textoAlternativo ?? ""])
-        )
-      );
+      const filtered = rows
+        .filter((b) => b.tipo === bannerTipo)
+        .sort((a, b) => a.posicao - b.posicao || String(a.createdAt ?? "").localeCompare(String(b.createdAt ?? "")));
+      setApiBanners(filtered);
+      setAltDraft(Object.fromEntries(filtered.map((b) => [b.id, b.textoAlternativo ?? ""])));
+      setObjectPositions(Object.fromEntries(filtered.map((b) => [b.id, b.objectPosition ?? "50% 50%"])));
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Verifique a API e tente novamente.";
       toast({ type: "error", title: "Erro ao carregar banners", description: msg });
@@ -411,12 +452,52 @@ export function AdminBannersPageContent({ variant = "home" }: AdminBannersPageCo
                     </div>
                   </div>
 
-                  <button type="button" className="mb-4 block w-full text-left" onClick={() => openViewer(index)}>
+                  {/* Pré-visualização com seletor de ponto focal */}
+                  <div className="mb-1">
                     <BannerPreview
                       slide={{ id: Number(banner.posicao), image: banner.arquivoUrl, alt: banner.textoAlternativo ?? "" }}
-                      className="cursor-zoom-in"
+                      objectPosition={objectPositions[banner.id] ?? banner.objectPosition ?? "50% 50%"}
+                      onPickPosition={(pos) =>
+                        setObjectPositions((prev) => ({ ...prev, [banner.id]: pos }))
+                      }
                     />
-                  </button>
+                  </div>
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <p className="text-xs text-zinc-500">
+                      <span className="font-medium">Clique na imagem</span> para definir o ponto focal (onde ela deve centralizar).
+                      Posição atual:{" "}
+                      <code className="rounded bg-zinc-100 px-1 text-xs text-zinc-700">
+                        {objectPositions[banner.id] ?? banner.objectPosition ?? "50% 50%"}
+                      </code>
+                    </p>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      loading={savingPositionId === banner.id}
+                      disabled={
+                        savingPositionId === banner.id ||
+                        (objectPositions[banner.id] ?? "50% 50%") === (banner.objectPosition ?? "50% 50%")
+                      }
+                      onClick={async () => {
+                        setSavingPositionId(banner.id);
+                        try {
+                          await editarBannerAdmin(banner.id, {
+                            objectPosition: objectPositions[banner.id] ?? null,
+                          });
+                          await refreshApiBanners();
+                          toast({ type: "success", title: "Posição salva", description: "Ponto focal atualizado com sucesso." });
+                        } catch (e) {
+                          const msg = e instanceof Error ? e.message : "Não foi possível salvar a posição.";
+                          toast({ type: "error", title: "Falha ao salvar posição", description: msg });
+                        } finally {
+                          setSavingPositionId(null);
+                        }
+                      }}
+                    >
+                      Salvar posição
+                    </Button>
+                  </div>
 
                   <div className="space-y-3">
                     <div>

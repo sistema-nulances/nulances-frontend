@@ -75,6 +75,7 @@ export function HeroBanner({ variant = "home" }: HeroBannerProps) {
             id: idx + 1,
             image: b.imagem,
             alt: b.textoAlternativo?.trim() || `Banner ${idx + 1}`,
+            objectPosition: b.objectPosition ?? undefined,
           }));
         setItems(next);
         if (variant === "marketplace") {
@@ -184,6 +185,7 @@ export function HeroBanner({ variant = "home" }: HeroBannerProps) {
                         src={banner.image}
                         alt={banner.alt}
                         className="h-full w-full object-cover"
+                        style={{ objectPosition: banner.objectPosition ?? "50% 50%" }}
                       />
                     ) : (
                       <Image
@@ -192,6 +194,7 @@ export function HeroBanner({ variant = "home" }: HeroBannerProps) {
                         fill
                         priority={idx === 0}
                         className="object-cover"
+                        style={{ objectPosition: banner.objectPosition ?? "50% 50%" }}
                         sizes="100vw"
                       />
                     )}

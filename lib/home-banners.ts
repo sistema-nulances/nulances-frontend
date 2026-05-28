@@ -17,6 +17,7 @@ export type HomeBannerSlide = {
   id: number;
   image: string;
   alt: string;
+  objectPosition?: string;
 };
 
 export const DEFAULT_HOME_BANNERS: HomeBannerSlide[] = [

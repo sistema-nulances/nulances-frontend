@@ -16,6 +16,7 @@ export type BannerCreateRequest = {
   textoAlternativo?: string;
   imagem: string;
   ativo?: boolean;
+  objectPosition?: string;
 };
 
 export type BannerUpdateRequest = {
@@ -24,6 +25,7 @@ export type BannerUpdateRequest = {
   textoAlternativo?: string;
   imagem?: string;
   ativo?: boolean;
+  objectPosition?: string | null;
 };
 
 export type BannerAdminResponse = {
@@ -34,6 +36,7 @@ export type BannerAdminResponse = {
   imagem: string;
   arquivoUrl: string;
   ativo: boolean;
+  objectPosition?: string | null;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -44,4 +47,5 @@ export type BannerPublicResponse = {
   posicao: number;
   textoAlternativo?: string | null;
   imagem: string;
+  objectPosition?: string | null;
 };
