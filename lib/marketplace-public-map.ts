@@ -1,10 +1,7 @@
 import type { MarketplaceCategory, MarketplaceItem } from "@/data/marketplace-items";
 import { getApiBaseUrl } from "@/lib/api/api-url";
-import {
-  labelCambioApi,
-  labelCombustivelApi,
-  labelCondicaoApi,
-} from "@/data/bem-veiculo-api";
+import { labelCambioApi, labelCombustivelApi } from "@/data/bem-veiculo-api";
+import { labelCondicaoAnuncioApi } from "@/data/anuncio-veiculo-api";
 import { marcaVeiculoLabel, normalizeMarcaVeiculoCode } from "@/lib/bem-marca-veiculo";
 import type {
   AnuncioPublicoDetalheResponse,
@@ -114,7 +111,7 @@ export function mapAnuncioPublicoListToMarketplaceItem(
   const modelo = String(row.modelo ?? "").trim() || "—";
   const titulo = [marca, modelo].filter((x) => x && x !== "—").join(" ").trim() || "Anúncio";
   const cidade = String(row.cidade ?? "").trim() || "—";
-  const condicaoLabel = labelCondicaoApi(row.condicao) || "Pequena monta";
+  const condicaoLabel = labelCondicaoAnuncioApi(row.condicao) || "—";
   const midias = mapAnuncioPublicoMidiasToRenderable(row.imagens);
 
   return {
@@ -147,7 +144,7 @@ export function mapAnuncioPublicoDetalheToMarketplaceItem(
   const cidade = String(row.cidade ?? "").trim() || "—";
   const medias = mapAnuncioPublicoMidiasToRenderable(row.imagens);
   const imagens = medias.map((media) => media.url);
-  const condicaoLabel = labelCondicaoApi(row.condicao) || "Pequena monta";
+  const condicaoLabel = labelCondicaoAnuncioApi(row.condicao) || "—";
 
   return {
     id: String(row.id ?? ""),

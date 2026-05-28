@@ -33,6 +33,7 @@ import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/ui/page-header";
 import { useToast } from "@/components/ui/use-toast";
 import { VendedorAnalisarPerfilSheet } from "@/components/admin/marketplace/vendedor-analisar-perfil-sheet";
+import { VendedorPlanoAdminSection } from "@/components/admin/marketplace/vendedor-plano-admin-section";
 import { Select, type SelectOption } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { formatDashboardDateTime } from "@/lib/format-dashboard-datetime";
@@ -769,6 +770,10 @@ export function AdminMarketplaceVendedoresContent() {
                     </dd>
                   </div>
                 </dl>
+
+                {detail.status === "ativo" && detail.usuarioId ? (
+                  <VendedorPlanoAdminSection usuarioId={String(detail.usuarioId)} />
+                ) : null}
 
                 {detail.status === "pendente_verificacao" ? (
                   <div className="space-y-2">

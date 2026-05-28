@@ -32,13 +32,12 @@ import { MARKETPLACE_ANUNCIOS_MODERACAO_QUERY } from "@/data/marketplace-admin-m
 import {
   BEM_CAMBIO_API,
   BEM_COMBUSTIVEL_API,
-  BEM_CONDICAO_API,
   BEM_TIPO_VEICULO_API,
   labelCambioApi,
   labelCombustivelApi,
-  labelCondicaoApi,
   labelTipoVeiculoApi,
 } from "@/data/bem-veiculo-api";
+import { ANUNCIO_CONDICAO_API, labelCondicaoAnuncioApi } from "@/data/anuncio-veiculo-api";
 import { normalizeMarcaVeiculoCode } from "@/lib/bem-marca-veiculo";
 import { marcaVeiculoLabel } from "@/lib/bem-marca-veiculo";
 import { formatDashboardDateTime } from "@/lib/format-dashboard-datetime";
@@ -435,9 +434,9 @@ async function uploadNovasMidiasAnuncio(
 }
 
 function labelCondicaoForSheet(raw: string | null | undefined): string {
-  const code = resolveApiEnumValue(raw, BEM_CONDICAO_API);
-  if (!code) return "Pequena monta";
-  return labelCondicaoApi(code) || String(raw ?? "").trim() || "Pequena monta";
+  const code = resolveApiEnumValue(raw, ANUNCIO_CONDICAO_API);
+  if (!code) return "Usado";
+  return labelCondicaoAnuncioApi(code) || String(raw ?? "").trim() || "Usado";
 }
 
 function mapAnuncioResponseToRow(response: AnuncioResponse): MarketplaceAnuncioAdmin {
@@ -559,7 +558,7 @@ function mapRowToPatchRequest(next: MarketplaceAnuncioAdmin): EditarAnuncioReque
     preco: parsePrecoToNumber(next.preco),
     cidade: next.local?.trim() || undefined,
     tipo: resolveApiEnumValue(next.tipoVeiculo, BEM_TIPO_VEICULO_API) as EditarAnuncioRequest["tipo"],
-    condicao: resolveApiEnumValue(next.condicao, BEM_CONDICAO_API) as EditarAnuncioRequest["condicao"],
+    condicao: resolveApiEnumValue(next.condicao, ANUNCIO_CONDICAO_API) as EditarAnuncioRequest["condicao"],
     ano: anoDigits ? Number(anoDigits.slice(0, 4)) : undefined,
     quilometragem: quilometragemDigits ? Number(quilometragemDigits) : undefined,
     combustivel: resolveApiEnumValue(next.combustivel, BEM_COMBUSTIVEL_API) as EditarAnuncioRequest["combustivel"],
@@ -643,7 +642,7 @@ function mapSellerApiToRow(item: AnuncioVendedorListResponse): MarketplaceAnunci
     leilaoId: 0,
     status: statusModeracao === "aprovado" ? "ABERTO" : "EM_BREVE",
     titulo: titulo || "Anúncio",
-    condicao: "Pequena monta",
+    condicao: "Usado",
     marca: marcaCode || marcaLabel,
     modelo,
     ano: "—",
@@ -694,7 +693,7 @@ function mapAdminApiToRow(item: AnuncioAdminListResponse): MarketplaceAnuncioAdm
     leilaoId: 0,
     status: statusModeracao === "aprovado" ? "ABERTO" : "EM_BREVE",
     titulo: titulo || "Anúncio",
-    condicao: "Pequena monta",
+    condicao: "Usado",
     marca: marcaCode || marcaLabel,
     modelo,
     ano: "—",
@@ -731,7 +730,7 @@ function createDraftAnuncio(seedId: number): MarketplaceAnuncioAdmin {
     categoria: "carros",
     status: "EM_BREVE",
     titulo: "",
-    condicao: "Pequena monta",
+    condicao: "Usado",
     marca: "",
     modelo: "",
     ano: "",

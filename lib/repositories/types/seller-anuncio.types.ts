@@ -32,10 +32,7 @@ export type TipoVeiculoAnuncioApi =
   | "ONIBUS"
   | "OUTRO";
 
-export type CondicaoAnuncioVeiculoApi =
-  | "MEDIA_MONTA"
-  | "PEQUENA_MONTA"
-  | "GRANDE_MONTA";
+export type CondicaoAnuncioVeiculoApi = "NOVO" | "USADO" | "SEMINOVO";
 
 export type CombustivelVeiculoApi =
   | "FLEX"

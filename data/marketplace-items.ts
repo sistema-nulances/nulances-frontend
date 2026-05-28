@@ -1,4 +1,4 @@
-import type { BemCondicao } from "@/data/bem-veiculo-options";
+import type { AnuncioCondicao } from "@/data/anuncio-veiculo-api";
 
 export type MarketplaceCategory = string;
 
@@ -7,8 +7,8 @@ export type MarketplaceCategoryFilter = MarketplaceCategory | "todos";
 
 export type MarketplaceStatus = "ABERTO" | "EM_BREVE" | "ENCERRADO";
 
-/** Alinhado às opções de condição do cadastro de bem / leilão. */
-export type MarketplaceCondicao = BemCondicao;
+/** Condição do item no marketplace (Novo, Usado, Seminovo — não monta de leilão). */
+export type MarketplaceCondicao = AnuncioCondicao;
 
 export type MarketplaceItem = {
   /** Mock numérico ou UUID string vindo da API pública. */
@@ -36,7 +36,7 @@ export const marketplaceItems: MarketplaceItem[] = [
     categoria: "carros",
     status: "ABERTO",
     titulo: "Toyota Corolla Altis 2.0 Hybrid",
-    condicao: "Pequena monta",
+    condicao: "Usado",
     marca: "Toyota",
     modelo: "Corolla Altis",
     ano: "2023/2024",
@@ -54,7 +54,7 @@ export const marketplaceItems: MarketplaceItem[] = [
     categoria: "carros",
     status: "EM_BREVE",
     titulo: "Honda Civic Touring 1.5 Turbo CVT",
-    condicao: "Média monta",
+    condicao: "Usado",
     marca: "Honda",
     modelo: "Civic Touring",
     ano: "2021/2021",
@@ -72,7 +72,7 @@ export const marketplaceItems: MarketplaceItem[] = [
     categoria: "carros",
     status: "ABERTO",
     titulo: "Jeep Compass Longitude 2.0 Flex AT",
-    condicao: "Grande monta",
+    condicao: "Usado",
     marca: "Jeep",
     modelo: "Compass Longitude",
     ano: "2020/2021",
@@ -90,7 +90,7 @@ export const marketplaceItems: MarketplaceItem[] = [
     categoria: "carros",
     status: "ABERTO",
     titulo: "Chevrolet Onix LT Turbo",
-    condicao: "Média monta",
+    condicao: "Usado",
     marca: "Chevrolet",
     modelo: "Onix LT Turbo",
     ano: "2022/2023",
@@ -108,7 +108,7 @@ export const marketplaceItems: MarketplaceItem[] = [
     categoria: "carros",
     status: "EM_BREVE",
     titulo: "Volkswagen T-Cross 1.4 TSI",
-    condicao: "Grande monta",
+    condicao: "Usado",
     marca: "Volkswagen",
     modelo: "T-Cross",
     ano: "2021/2022",
@@ -126,7 +126,7 @@ export const marketplaceItems: MarketplaceItem[] = [
     categoria: "carros",
     status: "ABERTO",
     titulo: "Hyundai HB20 Comfort 1.0 Flex",
-    condicao: "Grande monta",
+    condicao: "Usado",
     marca: "Hyundai",
     modelo: "HB20 Comfort",
     ano: "2019/2020",
@@ -144,7 +144,7 @@ export const marketplaceItems: MarketplaceItem[] = [
     categoria: "carros",
     status: "ABERTO",
     titulo: "Fiat Argo Drive 1.3",
-    condicao: "Média monta",
+    condicao: "Usado",
     marca: "Fiat",
     modelo: "Argo Drive",
     ano: "2020/2021",
@@ -162,7 +162,7 @@ export const marketplaceItems: MarketplaceItem[] = [
     categoria: "carros",
     status: "EM_BREVE",
     titulo: "Ford Ranger XLT 3.2 4x4",
-    condicao: "Grande monta",
+    condicao: "Usado",
     marca: "Ford",
     modelo: "Ranger XLT",
     ano: "2018/2019",
@@ -180,7 +180,7 @@ export const marketplaceItems: MarketplaceItem[] = [
     categoria: "motos",
     status: "ABERTO",
     titulo: "Yamaha XTZ 250 Lander ABS",
-    condicao: "Pequena monta",
+    condicao: "Usado",
     marca: "Yamaha",
     modelo: "XTZ 250 Lander ABS",
     ano: "2023/2024",
@@ -198,7 +198,7 @@ export const marketplaceItems: MarketplaceItem[] = [
     categoria: "caminhoes",
     status: "EM_BREVE",
     titulo: "Volkswagen Constellation 24.280",
-    condicao: "Grande monta",
+    condicao: "Usado",
     marca: "Volkswagen",
     modelo: "Constellation 24.280",
     ano: "2019/2020",

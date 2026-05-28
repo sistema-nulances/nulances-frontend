@@ -62,9 +62,9 @@ const TIPO_OPTIONS: SelectOption[] = [
 ];
 
 const CONDICAO_OPTIONS: SelectOption[] = [
-  { value: "PEQUENA_MONTA", label: "Pequena monta" },
-  { value: "MEDIA_MONTA", label: "Média monta" },
-  { value: "GRANDE_MONTA", label: "Grande monta" },
+  { value: "NOVO", label: "Novo" },
+  { value: "USADO", label: "Usado" },
+  { value: "SEMINOVO", label: "Seminovo" },
 ];
 
 const COMBUSTIVEL_OPTIONS: SelectOption[] = [

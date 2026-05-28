@@ -26,12 +26,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { BEM_MARCA_OPTIONS, inferMarcaModelo } from "@/data/bem-marcas";
-import {
-  BEM_CAMBIOS,
-  BEM_COMBUSTIVEIS,
-  BEM_CONDICOES,
-  BEM_TIPOS_VEICULO,
-} from "@/data/bem-veiculo-options";
+import { ANUNCIO_CONDICOES } from "@/data/anuncio-veiculo-api";
+import { BEM_CAMBIOS, BEM_COMBUSTIVEIS, BEM_TIPOS_VEICULO } from "@/data/bem-veiculo-options";
 import type { MarketplaceItem } from "@/data/marketplace-items";
 import { VendedorAdminLink } from "@/components/admin/marketplace/vendedor-admin-link";
 import { cn } from "@/lib/cn";
@@ -46,7 +42,7 @@ const opt = (values: readonly string[]): SelectOption[] =>
   values.map((v) => ({ value: v, label: v }));
 
 const OPT_TIPO: SelectOption[] = [{ value: "", label: "Selecione o tipo" }, ...opt(BEM_TIPOS_VEICULO)];
-const OPT_COND: SelectOption[] = [{ value: "", label: "Selecione a condição" }, ...opt(BEM_CONDICOES)];
+const OPT_COND: SelectOption[] = [{ value: "", label: "Selecione a condição" }, ...opt(ANUNCIO_CONDICOES)];
 const OPT_COMB: SelectOption[] = [{ value: "", label: "Selecione" }, ...opt(BEM_COMBUSTIVEIS)];
 const OPT_CAMB: SelectOption[] = [{ value: "", label: "Selecione" }, ...opt(BEM_CAMBIOS)];
 const OPT_MARCA: SelectOption[] = [{ value: "", label: "Selecione a marca" }, ...BEM_MARCA_OPTIONS];

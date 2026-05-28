@@ -91,7 +91,7 @@ const FALLBACK_MARKETPLACE_ITEM: MarketplaceItem = {
   categoria: "carros",
   status: "ABERTO",
   titulo: "Anúncio",
-  condicao: "Média monta",
+  condicao: "Usado",
   marca: "—",
   modelo: "—",
   ano: "N/A/N/A",

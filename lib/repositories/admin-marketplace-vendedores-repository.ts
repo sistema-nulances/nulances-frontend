@@ -5,6 +5,10 @@ import type {
   RecusarSolicitacaoVendedorRequest,
   StatusContaMarketplaceAdminApi,
 } from "@/lib/repositories/types/admin-marketplace-vendedores.types";
+import type {
+  AssinaturaPlanoAtualResponse,
+  PlanoAnuncioResponse,
+} from "@/lib/repositories/types/marketplace-planos.types";
 
 export async function listarAdminMarketplaceVendedores(params?: {
   status?: StatusContaMarketplaceAdminApi;
@@ -71,3 +75,26 @@ export async function revogarCargoVendedorAdminMarketplace(
     token: token ?? undefined,
   });
 }
+
+export async function buscarAssinaturaVendedorAdmin(
+  usuarioId: string
+): Promise<AssinaturaPlanoAtualResponse | null> {
+  return apiFetch<AssinaturaPlanoAtualResponse | null>(
+    `/admin/marketplace/vendedores/${encodeURIComponent(usuarioId)}/assinatura`,
+    { method: "GET" }
+  );
+}
+
+export async function atribuirPlanoVendedorAdmin(
+  usuarioId: string,
+  body: { planoId: string }
+): Promise<AssinaturaPlanoAtualResponse> {
+  return apiFetch<AssinaturaPlanoAtualResponse>(
+    `/admin/marketplace/vendedores/${encodeURIComponent(usuarioId)}/assinatura`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }
+  );
+}
+

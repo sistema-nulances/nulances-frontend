@@ -221,7 +221,7 @@ function pendingToAdmin(): MarketplaceAnuncioAdmin[] {
       categoria: p.categoria,
       status: "EM_BREVE",
       titulo: p.titulo,
-      condicao: "Média monta",
+      condicao: "Usado",
       marca,
       modelo,
       ano: "—",
