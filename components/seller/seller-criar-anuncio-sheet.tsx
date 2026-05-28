@@ -375,12 +375,12 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
         preco: precoNumber,
         cidade: cidade.trim(),
         descricao: descricao.trim(),
+        condicao: (condicao as import("@/lib/repositories/types/seller-anuncio.types").CondicaoAnuncioVeiculoApi) || undefined,
         midias,
       };
       if (isVeiculo) {
         if (marca.trim()) payload.marca = marca.trim();
         payload.tipo = tipo as import("@/lib/repositories/types/seller-anuncio.types").TipoVeiculoAnuncioApi || undefined;
-        payload.condicao = condicao as import("@/lib/repositories/types/seller-anuncio.types").CondicaoAnuncioVeiculoApi || undefined;
         if (ano.trim()) {
           const [fab] = ano.split("/");
           const anoNum = Number(fab?.trim());
@@ -509,6 +509,17 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
                 className="mt-1.5"
               />
             </div>
+            <div>
+              <Label htmlFor="sheet-condicao">Condição</Label>
+              <Select
+                id="sheet-condicao"
+                value={condicao}
+                onValueChange={setCondicao}
+                options={CONDICAO_OPTIONS}
+                placeholder="Selecione a condição"
+                className="mt-1.5"
+              />
+            </div>
             {isVeiculo ? (
               <>
                 <div>
@@ -531,17 +542,6 @@ export function SellerCriarAnuncioSheet({ open, onClose, onCreated }: Props) {
                     onValueChange={setTipo}
                     options={TIPO_OPTIONS}
                     placeholder="Selecione o tipo"
-                    className="mt-1.5"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="sheet-condicao">Condição</Label>
-                  <Select
-                    id="sheet-condicao"
-                    value={condicao}
-                    onValueChange={setCondicao}
-                    options={CONDICAO_OPTIONS}
-                    placeholder="Selecione a condição"
                     className="mt-1.5"
                   />
                 </div>

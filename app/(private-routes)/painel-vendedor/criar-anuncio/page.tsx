@@ -308,13 +308,13 @@ export default function SellerCriarAnuncioPage() {
         preco: precoNumber,
         cidade: cidade.trim(),
         descricao: descricao.trim(),
+        condicao: (condicao as CondicaoAnuncioVeiculoApi) || undefined,
         midias,
       };
 
       if (isVeiculo) {
         if (marca) payload.marca = marca.trim();
         payload.tipo = tipo as TipoVeiculoAnuncioApi;
-        payload.condicao = condicao as CondicaoAnuncioVeiculoApi;
         payload.ano = anoNumber;
         payload.quilometragem = quilometragemNumber;
         payload.combustivel = combustivel as CombustivelVeiculoApi;
@@ -428,6 +428,18 @@ export default function SellerCriarAnuncioPage() {
             />
           </div>
 
+          <div>
+            <Label htmlFor="condicao">Condição</Label>
+            <Select
+              id="condicao"
+              value={condicao}
+              onValueChange={setCondicao}
+              options={CONDICAO_OPTIONS}
+              placeholder="Selecione a condição"
+              className="mt-1.5"
+            />
+          </div>
+
           {isVeiculo ? (
             <>
               <div>
@@ -451,18 +463,6 @@ export default function SellerCriarAnuncioPage() {
                   value={tipo}
                   onValueChange={setTipo}
                   options={TIPO_OPTIONS}
-                  placeholder="Selecione"
-                  className="mt-1.5"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="condicao">Condição</Label>
-                <Select
-                  id="condicao"
-                  value={condicao}
-                  onValueChange={setCondicao}
-                  options={CONDICAO_OPTIONS}
                   placeholder="Selecione"
                   className="mt-1.5"
                 />
