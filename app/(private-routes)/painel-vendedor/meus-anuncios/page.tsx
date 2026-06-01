@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { AdminMarketplaceAnunciosContent } from "@/app/(private-routes)/admin/marketplace/anuncios/admin-marketplace-anuncios-content";
 import { SellerCriarAnuncioSheet } from "@/components/seller/seller-criar-anuncio-sheet";
@@ -10,14 +10,18 @@ import { SkeletonMarketplaceAnunciosGrid } from "@/components/skeletons";
 import { useToast } from "@/components/ui/use-toast";
 import { buscarPainelPlanosVendedor } from "@/lib/repositories/vendedor-planos-repository";
 
-export default function SellerMeusAnunciosPage() {
+function SellerMeusAnunciosContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [createSheetOpen, setCreateSheetOpen] = React.useState(false);
   const [refreshSignal, setRefreshSignal] = React.useState(0);
   const [checkingPlano, setCheckingPlano] = React.useState(true);
   const [hasPlanoAtivo, setHasPlanoAtivo] = React.useState(false);
   const [anunciosDisponiveis, setAnunciosDisponiveis] = React.useState<number | null>(null);
+
+  const autoCreate = searchParams.get("criar") === "1";
+  const autoOpenTriggeredRef = React.useRef(false);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -43,15 +47,33 @@ export default function SellerMeusAnunciosPage() {
     };
   }, [refreshSignal]);
 
+  // Abre o sheet automaticamente quando ?criar=1 e o plano já foi verificado
+  React.useEffect(() => {
+    if (!autoCreate || checkingPlano || autoOpenTriggeredRef.current) return;
+    autoOpenTriggeredRef.current = true;
+    // Limpa o param da URL sem causar navegação
+    router.replace("/painel-vendedor/meus-anuncios", { scroll: false });
+    if (!hasPlanoAtivo) {
+      toast({
+        type: "warning",
+        title: "Plano necessário",
+        description: "Escolha um plano para liberar a criação de anúncios.",
+      });
+      router.push("/painel-vendedor/planos");
+      return;
+    }
+    setCreateSheetOpen(true);
+  }, [autoCreate, checkingPlano, hasPlanoAtivo, router, toast]);
+
   return (
-    <Suspense fallback={<SkeletonMarketplaceAnunciosGrid />}>
+    <>
       {!hasPlanoAtivo ? (
         <div className="mb-4 rounded-2xl bg-white px-4 py-3 text-sm text-zinc-700 ring-1 ring-zinc-200">
-            {checkingPlano
-              ? "Verificando sua assinatura..."
-              : anunciosDisponiveis === 0
-                ? "Seu plano está ativo, mas você não tem anúncios disponíveis no ciclo atual."
-                : "Você precisa de um plano ativo para publicar anúncios."}
+          {checkingPlano
+            ? "Verificando sua assinatura..."
+            : anunciosDisponiveis === 0
+              ? "Seu plano está ativo, mas você não tem anúncios disponíveis no ciclo atual."
+              : "Você precisa de um plano ativo para publicar anúncios."}
         </div>
       ) : null}
       <AdminMarketplaceAnunciosContent
@@ -82,6 +104,14 @@ export default function SellerMeusAnunciosPage() {
           router.refresh();
         }}
       />
+    </>
+  );
+}
+
+export default function SellerMeusAnunciosPage() {
+  return (
+    <Suspense fallback={<SkeletonMarketplaceAnunciosGrid />}>
+      <SellerMeusAnunciosContent />
     </Suspense>
   );
 }

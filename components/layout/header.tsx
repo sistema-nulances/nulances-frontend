@@ -569,19 +569,32 @@ export function Header() {
           ) : isLoggedIn ? (
             <div className="flex items-center gap-3">
               {isMarketplace ? (
-                <Button
-                  type="button"
-                  variant={isVendedor ? "secondary" : "default"}
-                  onClick={handleSellerAction}
-                  className={cn(
-                    "h-11 rounded-full px-5 text-[14px] font-semibold",
-                    isVendedor
-                      ? "border border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50"
-                      : "bg-[var(--nulance-purple)] text-white hover:bg-[var(--nulance-purple)]/90"
-                  )}
-                >
-                  {sellerCtaLabel}
-                </Button>
+                <>
+                  {isVendedor ? (
+                    <Link href="/painel-vendedor/meus-anuncios?criar=1">
+                      <Button
+                        type="button"
+                        variant="default"
+                        className="h-11 rounded-full px-5 text-[14px] font-semibold bg-[var(--nulance-purple)] text-white hover:bg-[var(--nulance-purple)]/90"
+                      >
+                        Criar anúncio
+                      </Button>
+                    </Link>
+                  ) : null}
+                  <Button
+                    type="button"
+                    variant={isVendedor ? "secondary" : "default"}
+                    onClick={handleSellerAction}
+                    className={cn(
+                      "h-11 rounded-full px-5 text-[14px] font-semibold",
+                      isVendedor
+                        ? "border border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50"
+                        : "bg-[var(--nulance-purple)] text-white hover:bg-[var(--nulance-purple)]/90"
+                    )}
+                  >
+                    {sellerCtaLabel}
+                  </Button>
+                </>
               ) : null}
 
               <DropdownMenu>
