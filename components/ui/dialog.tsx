@@ -162,7 +162,7 @@ export type ConfirmDialogProps = {
   description: React.ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void> | void;
   /** `destructive`=vermelho, `warning`=âmbar. */
   confirmVariant?: "default" | "destructive" | "warning";
 };
@@ -177,13 +177,26 @@ export function ConfirmDialog({
   onConfirm,
   confirmVariant = "default",
 }: ConfirmDialogProps) {
-  const handleConfirm = () => {
-    onConfirm();
-    onOpenChange(false);
+  const [loading, setLoading] = React.useState(false);
+
+  const handleConfirm = async () => {
+    setLoading(true);
+    try {
+      await onConfirm();
+      onOpenChange(false);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (loading) return;
+        onOpenChange(next);
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
@@ -195,6 +208,7 @@ export function ConfirmDialog({
             variant="secondary"
             size="md"
             className="w-full rounded-full sm:w-auto"
+            disabled={loading}
             onClick={() => onOpenChange(false)}
           >
             {cancelLabel}
@@ -203,6 +217,7 @@ export function ConfirmDialog({
             type="button"
             variant="default"
             size="md"
+            loading={loading}
             className={cn(
               "w-full rounded-full sm:w-auto",
               confirmVariant === "destructive" &&
@@ -210,7 +225,7 @@ export function ConfirmDialog({
               confirmVariant === "warning" &&
                 "bg-amber-500 text-white hover:bg-amber-600 focus-visible:ring-amber-300"
             )}
-            onClick={handleConfirm}
+            onClick={() => void handleConfirm()}
           >
             {confirmLabel}
           </Button>
