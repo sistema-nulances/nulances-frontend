@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
+  Add01Icon,
   Search01Icon,
   UserIcon,
   ArrowReloadHorizontalIcon,
@@ -706,7 +707,15 @@ export function Header() {
 
     <header className="sticky top-0 z-40 w-full border-b border-zinc-200 bg-white/95 backdrop-blur-md pt-[env(safe-area-inset-top)] md:hidden">
       <div className="relative mx-auto flex h-14 items-center justify-between px-4">
-        <div className="w-10 shrink-0" aria-hidden />
+        {isMarketplace && isVendedor ? (
+          <Link href="/painel-vendedor/meus-anuncios?criar=1" aria-label="Criar anúncio">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--nulance-purple)] text-white shadow-sm active:scale-95 transition-transform">
+              <HugeiconsIcon icon={Add01Icon} size={20} color="currentColor" strokeWidth={2} />
+            </span>
+          </Link>
+        ) : (
+          <div className="w-10 shrink-0" aria-hidden />
+        )}
         <Link
           href={isMarketplace ? "/marketplace" : "/"}
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-transform active:scale-95"
