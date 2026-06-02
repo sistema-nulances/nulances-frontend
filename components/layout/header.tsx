@@ -713,6 +713,16 @@ export function Header() {
               <HugeiconsIcon icon={Add01Icon} size={20} color="currentColor" strokeWidth={2} />
             </span>
           </Link>
+        ) : isMarketplace && !authBootstrapping ? (
+          <button
+            type="button"
+            onClick={handleSellerAction}
+            className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-[var(--nulance-purple)] px-3 text-white shadow-sm active:scale-95 transition-transform"
+            aria-label={sellerCtaLabel}
+          >
+            <HugeiconsIcon icon={SaleTag02Icon} size={16} color="currentColor" strokeWidth={2} />
+            <span className="text-[12px] font-bold leading-none">Vender</span>
+          </button>
         ) : (
           <div className="w-10 shrink-0" aria-hidden />
         )}
