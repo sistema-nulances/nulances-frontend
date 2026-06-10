@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Select, type SelectOption } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/components/providers/auth-provider";
+import { getAuthTokenFromDocument } from "@/lib/auth-cookies";
+import * as authRepo from "@/lib/repositories/auth-repository";
 import { CIDADES_BRASIL_OPTIONS } from "@/data/cidades-brasil";
 import { ESTADO_BRASIL_OPTIONS } from "@/data/estado-brasil-options";
 import {
@@ -104,6 +106,13 @@ function sanitizeDigits(value: string): string {
   return value.replace(/\D/g, "");
 }
 
+function isVendedorRole(role?: string | null): boolean {
+  return String(role ?? "")
+    .trim()
+    .replace(/^ROLE_/i, "")
+    .toUpperCase() === "VENDEDOR";
+}
+
 function extractFileName(pathOrName: string): string {
   const raw = pathOrName.trim();
   if (!raw) return "";
@@ -119,6 +128,7 @@ export default function SolicitarVendedorPage() {
     isAuthenticated,
     status: authStatus,
     isVendedor,
+    refreshUser,
   } = useAuth();
 
   const accountTypeOptions: SelectOption[] = React.useMemo(
@@ -149,7 +159,9 @@ export default function SolicitarVendedorPage() {
 
   const isPF = tipoConta === "pessoa_fisica";
   const isPJ = tipoConta === "pessoa_juridica";
+  const isSellerApproved = isVendedor || requestStatus === "aprovado";
   const hasExistingRequest = requestStatus !== null;
+  const canSubmitRequest = !isSellerApproved && !hasExistingRequest;
 
   const applySolicitacaoToForm = React.useCallback((solicitacao: SolicitacaoVendedorResponse) => {
     setRequestStatus(toLocalStatus(solicitacao.status ?? null));
@@ -212,10 +224,34 @@ export default function SolicitarVendedorPage() {
     void (async () => {
       setInitialLoading(true);
       try {
+        await refreshUser();
+        if (!mounted) return;
+
+        const freshMe = await authRepo.fetchMe(getAuthTokenFromDocument());
+        if (!mounted) return;
+        if (isVendedorRole(freshMe.role)) {
+          toast({
+            type: "info",
+            title: "Você já é vendedor",
+            description: "Seu perfil já possui acesso ao painel de vendedor.",
+          });
+          router.replace("/painel-vendedor/meus-anuncios");
+          return;
+        }
+
         const solicitacao = await buscarMinhaSolicitacaoVendedorSafe();
         if (!mounted) return;
         if (solicitacao) {
           applySolicitacaoToForm(solicitacao);
+          if (toLocalStatus(solicitacao.status ?? null) === "aprovado") {
+            toast({
+              type: "info",
+              title: "Acesso já aprovado",
+              description: "Sua solicitação foi aprovada. Acesse o painel do vendedor.",
+            });
+            router.replace("/painel-vendedor/meus-anuncios");
+            return;
+          }
         } else {
           setEmail(normalizeEmail(me?.email ?? ""));
           setTelefone(formatPhoneBr(me?.telefone ?? ""));
@@ -245,6 +281,7 @@ export default function SolicitarVendedorPage() {
     authStatus,
     isAuthenticated,
     isVendedor,
+    refreshUser,
     router,
     toast,
     applySolicitacaoToForm,
@@ -304,10 +341,10 @@ export default function SolicitarVendedorPage() {
             variant="secondary"
             className="h-8 shrink-0 rounded-full px-3 text-xs"
             onClick={() => {
-              if (hasExistingRequest || loading) return;
+              if (!canSubmitRequest || loading) return;
               document.getElementById(`doc-${key}`)?.click();
             }}
-            disabled={hasExistingRequest || loading}
+            disabled={!canSubmitRequest || loading}
           >
             Escolher arquivo
           </Button>
@@ -383,6 +420,16 @@ export default function SolicitarVendedorPage() {
         description: "Você precisa estar autenticado para enviar a solicitação.",
       });
       router.push("/auth");
+      return;
+    }
+
+    if (isVendedor || requestStatus === "aprovado") {
+      toast({
+        type: "info",
+        title: "Você já é vendedor",
+        description: "Seu perfil já possui acesso ao painel de vendedor.",
+      });
+      router.replace("/painel-vendedor/meus-anuncios");
       return;
     }
 
@@ -479,6 +526,19 @@ export default function SolicitarVendedorPage() {
           <div className="rounded-3xl bg-white p-6 ring-1 ring-zinc-200 sm:p-8">
             {initialLoading ? (
               <p className="text-sm text-zinc-500">Carregando sua solicitação...</p>
+            ) : isSellerApproved ? (
+              <div className="space-y-4">
+                <p className="text-sm text-zinc-600">
+                  Seu perfil já possui acesso de vendedor. Você pode gerenciar anúncios no painel.
+                </p>
+                <Button
+                  type="button"
+                  className="h-12 rounded-full bg-[var(--nulance-purple)] px-7 text-[16px] font-semibold text-white hover:opacity-90"
+                  onClick={() => router.push("/painel-vendedor/meus-anuncios")}
+                >
+                  Ir para o painel do vendedor
+                </Button>
+              </div>
             ) : (
               <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -487,7 +547,7 @@ export default function SolicitarVendedorPage() {
                     <Select
                       id="tipo"
                       value={tipoConta}
-                    disabled={hasExistingRequest || loading}
+                    disabled={!canSubmitRequest || loading}
                       onValueChange={(v) => {
                         setTipoConta(v as SellerAccountType);
                         setDocumento((current) =>
@@ -506,7 +566,7 @@ export default function SolicitarVendedorPage() {
                     <Input
                       id="documento"
                       value={documento}
-                      disabled={hasExistingRequest || loading}
+                      disabled={!canSubmitRequest || loading}
                       onChange={(e) =>
                         setDocumento(
                           tipoConta === "pessoa_juridica" ? formatCnpj(e.target.value) : formatCpf(e.target.value)
@@ -528,7 +588,7 @@ export default function SolicitarVendedorPage() {
                   <Input
                     id="nome"
                     value={nome}
-                    disabled={hasExistingRequest || loading}
+                    disabled={!canSubmitRequest || loading}
                     onChange={(e) => setNome(e.target.value)}
                     className={fieldClass}
                     error={!!errors.nome}
@@ -544,7 +604,7 @@ export default function SolicitarVendedorPage() {
                       id="email"
                       type="email"
                       value={email}
-                      disabled={hasExistingRequest || loading}
+                      disabled={!canSubmitRequest || loading}
                       onChange={(e) => setEmail(normalizeEmail(e.target.value))}
                       className={fieldClass}
                       error={!!errors.email}
@@ -557,7 +617,7 @@ export default function SolicitarVendedorPage() {
                     <Input
                       id="telefone"
                       value={telefone}
-                      disabled={hasExistingRequest || loading}
+                      disabled={!canSubmitRequest || loading}
                       onChange={(e) => setTelefone(formatPhoneBr(e.target.value))}
                       className={fieldClass}
                       error={!!errors.telefone}
@@ -573,7 +633,7 @@ export default function SolicitarVendedorPage() {
                     <Select
                       id="cidade"
                       value={cidade}
-                      disabled={hasExistingRequest || loading}
+                      disabled={!canSubmitRequest || loading}
                       onValueChange={(v) => {
                         setCidade(v);
                         const uf = parseUfFromMunicipioLabel(v);
@@ -594,7 +654,7 @@ export default function SolicitarVendedorPage() {
                     <Select
                       id="estado"
                       value={estado}
-                      disabled={hasExistingRequest || loading}
+                      disabled={!canSubmitRequest || loading}
                       onValueChange={(v) => setEstado(v)}
                       options={ESTADO_BRASIL_OPTIONS}
                       searchable
@@ -613,7 +673,7 @@ export default function SolicitarVendedorPage() {
                     id="descricao"
                     rows={5}
                     value={descricao}
-                    readOnly={hasExistingRequest || loading}
+                    readOnly={!canSubmitRequest || loading}
                     onChange={(e) => setDescricao(e.target.value)}
                     className={`rounded-2xl border bg-white px-4 py-3 text-[15px] text-zinc-900 outline-none focus:ring-4 ${
                       errors.descricao
@@ -651,10 +711,10 @@ export default function SolicitarVendedorPage() {
                 <div className="mt-2 flex flex-wrap items-center gap-3">
                   <Button
                     type="submit"
-                    disabled={loading || hasExistingRequest}
+                    disabled={loading || !canSubmitRequest}
                     className="h-12 rounded-full bg-[var(--nulance-purple)] px-7 text-[16px] font-semibold text-white hover:opacity-90"
                   >
-                    {loading ? "Enviando..." : hasExistingRequest ? "Solicitação já enviada" : "Enviar solicitação"}
+                    {loading ? "Enviando..." : !canSubmitRequest ? "Solicitação já enviada" : "Enviar solicitação"}
                   </Button>
                   <Button
                     type="button"

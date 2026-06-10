@@ -33,6 +33,7 @@ const CATEGORY_OPTIONS: CategoryOpt[] = [
   { value: "ANIMAIS_DE_ESTIMACAO", label: "Animais de estimação", emoji: "🐾" },
   { value: "MUSICA_E_HOBBIES", label: "Música e hobbies", emoji: "🎵" },
   { value: "AGRO_E_INDUSTRIA", label: "Agro e indústria", emoji: "🌾" },
+  { value: "MAQUINAS", label: "Máquinas", emoji: "⚙️" },
   { value: "VAGAS_DE_EMPREGO", label: "Vagas de emprego", emoji: "💼" },
   { value: "COMERCIO", label: "Comércio", emoji: "🏪" },
   { value: "GAMES", label: "Games", emoji: "🎮" },

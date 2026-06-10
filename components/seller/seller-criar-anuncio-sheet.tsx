@@ -40,6 +40,7 @@ const CATEGORIA_OPTIONS: SelectOption[] = [
   { value: "ANIMAIS_DE_ESTIMACAO", label: "🐾 Animais de estimação" },
   { value: "MUSICA_E_HOBBIES", label: "🎵 Música e hobbies" },
   { value: "AGRO_E_INDUSTRIA", label: "🌾 Agro e indústria" },
+  { value: "MAQUINAS", label: "⚙️ Máquinas" },
   { value: "VAGAS_DE_EMPREGO", label: "💼 Vagas de emprego" },
   { value: "COMERCIO", label: "🏪 Comércio" },
   { value: "GAMES", label: "🎮 Games" },

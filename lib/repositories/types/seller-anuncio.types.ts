@@ -12,6 +12,7 @@ export type CategoriaAnuncioApi =
   | "ANIMAIS_DE_ESTIMACAO"
   | "MUSICA_E_HOBBIES"
   | "AGRO_E_INDUSTRIA"
+  | "MAQUINAS"
   | "VAGAS_DE_EMPREGO"
   | "COMERCIO"
   | "GAMES"
