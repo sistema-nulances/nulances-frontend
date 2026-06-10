@@ -338,18 +338,6 @@ export default function SolicitarVendedorPage() {
     if (!estado.trim() || estado.trim().length !== 2) nextErrors.estado = "Estado inválido.";
     if (!descricao.trim()) nextErrors.descricao = "Conte sobre seu negócio.";
 
-    if (isPF) {
-      if (!hasDoc("rgFrente")) nextErrors.rgFrente = "Anexe o RG (frente).";
-      if (!hasDoc("rgVerso")) nextErrors.rgVerso = "Anexe o RG (verso).";
-      if (!hasDoc("cpfFrente")) nextErrors.cpfFrente = "Anexe o CPF (frente).";
-      if (!hasDoc("cpfVerso")) nextErrors.cpfVerso = "Anexe o CPF (verso).";
-    }
-
-    if (isPJ) {
-      if (!hasDoc("selfieDocumento")) nextErrors.selfieDocumento = "Anexe a selfie com documento.";
-      if (!hasDoc("contratoSocial")) nextErrors.contratoSocial = "Anexe o contrato social.";
-    }
-
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   }
@@ -412,13 +400,13 @@ export default function SolicitarVendedorPage() {
       const docsPayload: Partial<Record<SellerDocFieldKey, string>> = {};
 
       if (isPF) {
-        docsPayload.rgFrente = await resolveObjectKeyForDoc("rgFrente");
-        docsPayload.rgVerso = await resolveObjectKeyForDoc("rgVerso");
-        docsPayload.cpfFrente = await resolveObjectKeyForDoc("cpfFrente");
-        docsPayload.cpfVerso = await resolveObjectKeyForDoc("cpfVerso");
+        if (hasDoc("rgFrente")) docsPayload.rgFrente = await resolveObjectKeyForDoc("rgFrente");
+        if (hasDoc("rgVerso")) docsPayload.rgVerso = await resolveObjectKeyForDoc("rgVerso");
+        if (hasDoc("cpfFrente")) docsPayload.cpfFrente = await resolveObjectKeyForDoc("cpfFrente");
+        if (hasDoc("cpfVerso")) docsPayload.cpfVerso = await resolveObjectKeyForDoc("cpfVerso");
       } else {
-        docsPayload.selfieDocumento = await resolveObjectKeyForDoc("selfieDocumento");
-        docsPayload.contratoSocial = await resolveObjectKeyForDoc("contratoSocial");
+        if (hasDoc("selfieDocumento")) docsPayload.selfieDocumento = await resolveObjectKeyForDoc("selfieDocumento");
+        if (hasDoc("contratoSocial")) docsPayload.contratoSocial = await resolveObjectKeyForDoc("contratoSocial");
       }
 
       const payload = {
@@ -638,9 +626,9 @@ export default function SolicitarVendedorPage() {
                 </div>
 
                 <div className="mt-2 rounded-2xl border border-zinc-200 p-4 sm:p-5">
-                  <h2 className="text-sm font-semibold text-zinc-900">Documentos obrigatórios</h2>
+                  <h2 className="text-sm font-semibold text-zinc-900">Documentos <span className="font-normal text-zinc-400">(opcional)</span></h2>
                   <p className="mt-1 text-xs text-zinc-500">
-                    Envie arquivos legíveis em imagem ou PDF.
+                    Envio opcional. Você pode anexar documentos agora ou enviá-los posteriormente quando solicitado.
                   </p>
 
                   {isPF ? (
